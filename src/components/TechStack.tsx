@@ -119,7 +119,7 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
         card.removeEventListener("focusout", onLeave);
       };
     },
-    { scope: cardRef }
+    { dependencies: [], scope: cardRef }
   );
 
   return (
@@ -278,7 +278,7 @@ export default function TechStack() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef }
+    { dependencies: [], scope: sectionRef }
   );
 
   return (
