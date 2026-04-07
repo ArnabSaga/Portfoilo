@@ -127,16 +127,23 @@ export default function About() {
 
             {/* Social Links */}
             <div className="about-text-reveal mt-12 flex flex-wrap justify-center lg:justify-start gap-8">
-              {["LinkedIn", "Github", "Instagram"].map((social) => (
-                <div
-                  key={social}
+              {[
+                { name: "Github", url: "https://github.com/ArnabSaga" },
+                { name: "LinkedIn", url: "https://www.linkedin.com/in/achyuta1/" },
+                { name: "Instagram", url: "https://www.instagram.com/rz_arnab_/" },
+              ].map((social) => (
+                <a
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group flex cursor-pointer items-center gap-3 overflow-hidden"
                 >
                   <div className="h-1.5 w-1.5 rounded-full bg-black/20 group-hover:bg-black transition-colors duration-300" />
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-black/50 group-hover:text-black transition-colors duration-300">
-                    {social}
+                    {social.name}
                   </span>
-                </div>
+                </a>
               ))}
             </div>
           </div>
