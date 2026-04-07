@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-syne: var(--font-syne);
+  --font-inter: var(--font-inter);
+  
+  --color-background: #F9F9F9;
+  --color-surface: #FFFFFF;
+  --color-foreground: #111111;
+  --color-border-custom: #E4E4E7;
+}
+
+:root {
+  --background: #F9F9F9;
+  --foreground: #111111;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar for Lenis smooth scroll */
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
