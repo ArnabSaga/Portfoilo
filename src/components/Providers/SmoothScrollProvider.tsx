@@ -31,32 +31,12 @@ export default function SmoothScrollProvider({ children }: SmoothScrollProviderP
     // Connect ScrollTrigger to Lenis scroll
     if (lenisRef.current?.lenis) {
       lenisRef.current.lenis.on("scroll", ScrollTrigger.update);
-      
-      ScrollTrigger.scrollerProxy(document.body, {
-        scrollTop(value) {
-          const lenis = lenisRef.current?.lenis;
-          if (!lenis) return 0;
-          if (arguments.length && value !== undefined) {
-              lenis.scrollTo(value);
-          }
-          return lenis.scroll;
-        },
-        getBoundingClientRect() {
-          return {
-            top: 0,
-            left: 0,
-            width: window.innerWidth,
-            height: window.innerHeight,
-          };
-        },
-      });
     }
   }, { scope: undefined });
 
   // Handle reduced motion
   const options = {
-    lerp: isReducedMotion() ? 1 : 0.12,
-    duration: isReducedMotion() ? 0 : 1.2,
+    lerp: isReducedMotion() ? 1 : 0.08,
     smoothWheel: !isReducedMotion(),
     wheelMultiplier: 1.1,
     touchMultiplier: 2,
@@ -64,7 +44,7 @@ export default function SmoothScrollProvider({ children }: SmoothScrollProviderP
   };
 
   return (
-    <ReactLenis root ref={lenisRef} options={options}>
+    <ReactLenis root ref={lenisRef} options={options} autoRaf={false}>
       {children}
     </ReactLenis>
   );
