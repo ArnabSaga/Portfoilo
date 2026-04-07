@@ -98,7 +98,7 @@ export default function Hero() {
     }
 
     return () => ctx.revert();
-  }, { scope: container });
+  }, { dependencies: [], scope: container });
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     // Skip if on touch or reduced motion

@@ -150,7 +150,7 @@ export default function Projects() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef }
+    { dependencies: [], scope: sectionRef }
   );
 
   return (

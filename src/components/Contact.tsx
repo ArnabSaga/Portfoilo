@@ -20,7 +20,7 @@ export default function Contact() {
       duration: DURATION_SLOW,
       ease: EASE_STANDARD,
     });
-  }, { scope: container });
+  }, { dependencies: [], scope: container });
 
   return (
     <section id="contact" ref={container} className="py-64 px-6 md:px-12 bg-background flex flex-col items-center justify-center text-center border-b border-border-custom min-h-screen">

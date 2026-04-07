@@ -46,7 +46,7 @@ export default function Marquee() {
         }
       }
     });
-  }, { scope: container });
+  }, { dependencies: [], scope: container });
 
   const items = [
     "Next.js Architect",

@@ -1,181 +1,323 @@
 "use client";
 
+import { DURATION_BASE, EASE_STANDARD, gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
-import { gsap, EASE_STANDARD, DURATION_BASE } from "@/lib/gsap";
+import Image from "next/image";
 import { useRef } from "react";
 
 const stack = [
+  { name: "JavaScript", category: "Frontend & Backend", image: "/icon/javascript.jpg" },
+  { name: "TypeScript", category: "Frontend & Backend", image: "/icon/typescript.jpg" },
+  { name: "React.js", category: "Frontend", image: "/icon/reactjs.jpg" },
+  { name: "Next.js", category: "Fullstack", image: "/icon/nextjs.jpg" },
+  { name: "Node.js", category: "Backend", image: "/icon/nodejs.jpg" },
+  { name: "Express.js", category: "Backend", image: "/icon/express.jpg" },
+  { name: "MongoDB", category: "Backend", image: "/icon/mongodb.jpg" },
+  { name: "PostgreSQL", category: "Backend", image: "/icon/postgresql.jpg" },
+  { name: "Prisma", category: "Backend", image: "/icon/prisma.webp" },
+  { name: "Docker", category: "DevOps", image: "/icon/docker.jpg" },
+  { name: "Tailwind CSS", category: "Styles", image: "/icon/tailwind.jpg" },
   {
-    name: "React",
-    category: "Frontend",
-    icon: (
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="2" />
-        <path d="M12 21.933c-3.412 0-6.643-2.072-8.324-4.811a.498.498 0 0 1 .15-.658l1.458-.841a.5.5 0 0 1 .658.15c1.474 2.456 4.305 4.16 6.058 4.16 1.753 0 4.584-1.704 6.058-4.16a.5.5 0 0 1 .658-.15l1.458.841a.5.5 0 1 .15.658c-1.681 2.739-4.912 4.811-8.324 4.811ZM12 2.067C8.588 2.067 5.357 4.139 3.676 6.878a.498.498 0 0 0 .15.658l1.458.841a.5.5 0 0 0 .658-.15C7.416 5.771 10.247 4.067 12 4.067c1.753 0 4.584 1.704 6.058 4.16a.5.5 0 0 0 .658.15l1.458-.841a.5.5 0 0 0 .15-.658C18.643 4.139 15.412 2.067 12 2.067Z" />
-        <path d="M2.378 8.653a.5.5 0 0 1 .658-.15l1.458.841a.5.5 0 0 1 .15.658C3.17 12.391 3.17 16.035 4.644 18.5a.5.5 0 0 1-.15.658l-1.458.841a.5.5 0 0 1-.658-.15c-1.921-3.203-1.921-7.989 0-11.192ZM21.622 8.653a.5.5 0 0 0-.658-.15l-1.458.841a.5.5 0 0 0-.15.658c1.474 2.389 1.474 6.033 0 8.5a.5.5 0 0 0 .15.658l1.458.841a.5.5 0 0 0 .658-.15c1.921-3.203 1.921-7.989 0-11.192Z" />
-      </svg>
-    )
-  },
-  {
-    name: "Next.js",
-    category: "Fullstack",
-    icon: (
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
-        <path d="M18 12L12 12L7.5 18" />
-        <path d="M16 11.5L9 6V18" />
-      </svg>
-    )
-  },
-  {
-    name: "Node.js",
-    category: "Backend",
-    icon: (
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 21H14V7L19 12V3H5V12L10 7V21Z" />
-      </svg>
-    )
-  },
-  {
-    name: "Tailwind",
+    name: "shadcn/ui",
     category: "Styles",
-    icon: (
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 12C4 12 5.6 7 12 7C18.4 7 20 12 20 12C20 12 18.4 17 12 17C5.6 17 4 12 4 12Z" />
-        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" />
-      </svg>
-    )
+    image: "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/www/public/logo.png",
   },
-  {
-    name: "PHP",
-    category: "Core",
-    icon: (
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <ellipse cx="12" cy="12" rx="10" ry="6" />
-        <path d="M12 9V15M9 12H15" />
-      </svg>
-    )
-  },
-  {
-    name: "Git",
-    category: "DevOps",
-    icon: (
-      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10.5 12.5C11.8807 12.5 13 11.3807 13 10C13 8.61929 11.8807 7.5 10.5 7.5C9.11929 7.5 8 8.61929 8 10C8 11.3807 9.11929 12.5 10.5 12.5Z" />
-        <path d="M16.5 16.5C17.8807 16.5 19 15.3807 19 14C19 12.6193 17.8807 11.5 16.5 11.5C15.1193 11.5 14 12.6193 14 14C14 15.3807 15.1193 16.5 16.5 16.5Z" />
-        <path d="M10.5 12.5V18.5" />
-        <path d="M16.5 11.5L10.5 7.5" />
-      </svg>
-    )
-  },
+  { name: "GSAP", category: "Animation", image: "/icon/gsap.jpg" },
+  { name: "Three.js", category: "Creative Dev", image: "/icon/three-js.jpg" },
+  { name: "Git", category: "DevOps", image: "/icon/git.jpg" },
 ];
 
-function StackItem({ item, index }: { item: typeof stack[0], index: number }) {
-  const iconRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLHeadingElement>(null);
-  const categoryRef = useRef<HTMLSpanElement>(null);
+function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) {
+  const cardRef = useRef<HTMLElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const metaRef = useRef<HTMLDivElement>(null);
+  const plusRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = () => {
-    gsap.to(iconRef.current, {
-      y: -20,
-      opacity: 1,
-      duration: 0.5,
-      ease: "power4.out"
-    });
-    gsap.to([textRef.current, categoryRef.current], {
-      y: -40,
-      opacity: 0,
-      duration: 0.5,
-      ease: "power4.out"
-    });
-  };
+  useGSAP(
+    () => {
+      if (
+        !cardRef.current ||
+        !imageRef.current ||
+        !titleRef.current ||
+        !metaRef.current ||
+        !plusRef.current
+      ) {
+        return;
+      }
 
-  const handleMouseLeave = () => {
-    gsap.to(iconRef.current, {
-      y: 0,
-      opacity: 0,
-      duration: 0.5,
-      ease: "power4.out"
-    });
-    gsap.to([textRef.current, categoryRef.current], {
-      y: 0,
-      opacity: 1,
-      duration: 0.5,
-      ease: "power4.out"
-    });
-  };
+      const tl = gsap.timeline({ paused: true });
+
+      tl.to(
+        cardRef.current,
+        {
+          y: -15,
+          scale: 1.02,
+          duration: 0.6,
+          ease: EASE_STANDARD,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+          borderColor: "rgba(255,255,255,0.2)",
+        },
+        0
+      )
+        .to(
+          imageRef.current,
+          {
+            scale: 1.1,
+            opacity: 0.8,
+            duration: 0.7,
+            ease: EASE_STANDARD,
+          },
+          0
+        )
+        .to(
+          titleRef.current,
+          {
+            y: -6,
+            duration: 0.5,
+            ease: EASE_STANDARD,
+          },
+          0
+        )
+        .to(
+          metaRef.current,
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: EASE_STANDARD,
+          },
+          0.1
+        )
+        .to(
+          plusRef.current,
+          {
+            rotate: 90,
+            scale: 1.1,
+            backgroundColor: "#fff",
+            color: "#000",
+            borderColor: "transparent",
+            duration: 0.5,
+            ease: EASE_STANDARD,
+          },
+          0
+        );
+
+      const card = cardRef.current;
+      const onEnter = () => tl.play();
+      const onLeave = () => tl.reverse();
+
+      card.addEventListener("mouseenter", onEnter);
+      card.addEventListener("mouseleave", onLeave);
+      card.addEventListener("focusin", onEnter);
+      card.addEventListener("focusout", onLeave);
+
+      return () => {
+        card.removeEventListener("mouseenter", onEnter);
+        card.removeEventListener("mouseleave", onLeave);
+        card.removeEventListener("focusin", onEnter);
+        card.removeEventListener("focusout", onLeave);
+      };
+    },
+    { scope: cardRef }
+  );
 
   return (
-    <div
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="stack-item group p-12 border-r border-b border-border-custom flex flex-col justify-between aspect-square hover:bg-foreground hover:text-background transition-colors duration-500 cursor-default relative overflow-hidden"
+    <article
+      ref={cardRef}
+      tabIndex={0}
+      // FIXED: Added responsive scaling. lg screens get a smaller card, xl/2xl get the massive one.
+      className="stack-card group relative flex shrink-0 flex-col justify-between overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] outline-none backdrop-blur-2xl will-change-transform h-[420px] w-[320px] lg:h-[460px] lg:w-[360px] 2xl:h-[520px] 2xl:w-[400px]"
     >
-      <div className="flex justify-between items-start">
-          <div className="relative h-4 overflow-hidden w-full">
-            <span ref={categoryRef} className="font-inter text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 group-hover:opacity-60 block text-current">
-              {String(index + 1).padStart(2, '0')} / {item.category}
-            </span>
-          </div>
-        <div className="w-8 h-8 flex items-center justify-center border border-current opacity-20 group-hover:opacity-100 transition-all group-hover:rotate-45">
-          <span className="text-[10px]">+</span>
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <Image
+          ref={imageRef}
+          src={item.image}
+          alt={item.name}
+          fill
+          className="object-cover opacity-30 transition-opacity duration-500 group-hover:opacity-60"
+          sizes="(max-width: 1024px) 320px, (max-width: 1536px) 360px, 400px"
+          unoptimized={item.image.startsWith("http")}
+        />
+        <div className="absolute inset-0 bg-linear-to-b from-[#060606]/95 via-[#060606]/50 to-[#060606]/95" />
+      </div>
+
+      <div className="relative z-10 flex items-start justify-between gap-4 p-6 lg:p-8 2xl:p-10">
+        <span className="font-inter text-[9px] font-semibold uppercase tracking-[0.3em] text-white/50 lg:text-[10px]">
+          {String(index + 1).padStart(2, "0")} — {item.category}
+        </span>
+
+        <div
+          ref={plusRef}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 transition-colors lg:h-9 lg:w-9"
+        >
+          <span className="font-inter text-[12px] font-light leading-none text-white/70 group-hover:text-black lg:text-[14px]">
+            +
+          </span>
         </div>
       </div>
 
-      <div className="relative h-32 flex items-center justify-center">
-         <h3 ref={textRef} className="text-4xl md:text-5xl font-syne font-extrabold uppercase tracking-tight group-hover:italic transition-all absolute text-current">
+      <div className="relative z-10 px-6 pt-6 pb-10 lg:px-8 lg:pt-8 lg:pb-12 2xl:px-10 2xl:pt-10 2xl:pb-16">
+        <h3
+          ref={titleRef}
+          className="font-syne text-[2.2rem] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] text-white lg:text-[2.5rem] 2xl:text-[2.85rem]"
+        >
           {item.name}
         </h3>
 
-        <div ref={iconRef} className="opacity-0 translate-y-8 absolute text-current">
-            {item.icon}
+        <div
+          ref={metaRef}
+          className="mt-4 flex translate-y-3 items-center gap-3 opacity-0 2xl:mt-5"
+        >
+          <div className="h-px w-6 bg-white/30 2xl:w-8" />
+          <span className="font-inter text-[8px] font-semibold uppercase tracking-[0.3em] text-white/50 lg:text-[9px]">
+            Highly Proficient
+          </span>
         </div>
       </div>
-
-      <div className="flex items-center gap-4">
-        <div className="h-px w-0 group-hover:w-12 bg-current transition-all duration-700"></div>
-        <span className="font-inter text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity delay-200 text-current">
-          Highly Proficient
-        </span>
-      </div>
-    </div>
+    </article>
   );
 }
 
 export default function TechStack() {
-  const container = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const introRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(() => {
-    // Initial reveal
-    gsap.from(".stack-item", {
-      opacity: 0,
-      y: 40,
-      stagger: 0.1,
-      duration: DURATION_BASE,
-      ease: EASE_STANDARD,
-      scrollTrigger: {
-        trigger: container.current,
-        start: "top 80%",
-      }
-    });
-  }, { scope: container });
+  useGSAP(
+    () => {
+      if (!sectionRef.current || !trackRef.current || !introRef.current) return;
+
+      const mm = gsap.matchMedia();
+
+      mm.add("(min-width: 1024px)", () => {
+        const section = sectionRef.current!;
+        const track = trackRef.current!;
+        const cards = gsap.utils.toArray<HTMLElement>(".stack-card");
+
+        const maxScroll = () => Math.max(0, track.scrollWidth - window.innerWidth);
+
+        gsap.set(cards, {
+          opacity: 0.25,
+          scale: 0.88,
+        });
+
+        gsap.set(track, { x: () => -maxScroll() });
+
+        gsap.from(introRef.current, {
+          opacity: 0,
+          y: 40,
+          duration: DURATION_BASE + 0.2,
+          ease: EASE_STANDARD,
+          scrollTrigger: {
+            trigger: section,
+            start: "top 80%",
+            once: true,
+          },
+        });
+
+        const horizontalTween = gsap.to(track, {
+          x: 0,
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: () => `+=${maxScroll()}`,
+            scrub: 1,
+            pin: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        cards.forEach((card) => {
+          gsap.to(card, {
+            opacity: 1,
+            scale: 1,
+            ease: EASE_STANDARD,
+            duration: 0.5,
+            scrollTrigger: {
+              trigger: card,
+              containerAnimation: horizontalTween,
+              start: "right 15%",
+              end: "center center",
+              scrub: true,
+            },
+          });
+
+          gsap.to(card, {
+            opacity: 0.25,
+            scale: 0.88,
+            ease: EASE_STANDARD,
+            duration: 0.5,
+            scrollTrigger: {
+              trigger: card,
+              containerAnimation: horizontalTween,
+              start: "center center",
+              end: "left 85%",
+              scrub: true,
+            },
+          });
+        });
+      });
+
+      mm.add("(max-width: 1023px)", () => {
+        gsap.from(".stack-card", {
+          opacity: 0,
+          y: 50,
+          stagger: 0.08,
+          duration: DURATION_BASE + 0.1,
+          ease: EASE_STANDARD,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 85%",
+            once: true,
+          },
+        });
+      });
+
+      return () => mm.revert();
+    },
+    { scope: sectionRef }
+  );
 
   return (
-    <section id="stack" ref={container} className="py-32 px-6 md:px-12 border-b border-border-custom bg-surface overflow-hidden">
-      <div className="max-w-screen-2xl mx-auto">
-        <div className="flex justify-between items-end mb-20">
-          <h2 className="text-6xl md:text-8xl font-syne font-extrabold uppercase tracking-tighter text-foreground leading-none">
-            Core<br/>Stack
-          </h2>
-          <div className="hidden md:block w-32 h-px bg-foreground/20 mb-4"></div>
-          <p className="font-inter text-[10px] font-bold uppercase tracking-[0.4em] text-foreground/40 text-right">
+    <section
+      id="stack"
+      ref={sectionRef}
+      // FIXED: Added min-h-screen, flex, flex-col, and justify-center so it behaves beautifully on all heights.
+      className="relative flex min-h-screen w-full flex-col justify-center overflow-hidden bg-[#060606] px-5 py-24 text-white md:px-8"
+    >
+      <div className="pointer-events-none absolute left-[15%] top-[20%] h-[500px] w-[500px] rounded-full bg-cyan-500/5 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-[10%] right-[15%] h-[600px] w-[600px] rounded-full bg-amber-500/5 blur-[120px]" />
+
+      <div className="relative z-10 mx-auto w-full max-w-[1800px]">
+        <div
+          ref={introRef}
+          className="mb-12 grid grid-cols-1 items-end gap-6 lg:mb-16 lg:grid-cols-[1.2fr_0.5fr_0.8fr] 2xl:mb-24"
+        >
+          <div>
+            <h2 className="font-syne text-[clamp(4rem,8vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.08em] text-[#f8f7f4]">
+              Core
+              <br />
+              Stack
+            </h2>
+          </div>
+
+          <div className="hidden h-px w-full bg-white/10 lg:block" />
+
+          <p className="pb-2 text-left font-inter text-[9px] font-semibold uppercase tracking-[0.45em] text-white/40 lg:pb-4 lg:text-right lg:text-[10px]">
             [ Technical expertise ]
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 border-t border-l border-border-custom">
+        {/* FIXED: Switched lg:items-stretch to lg:items-center so cards don't warp vertically */}
+        <div
+          ref={trackRef}
+          className="flex w-full flex-col gap-6 py-4 lg:w-max lg:flex-row-reverse lg:items-center lg:gap-8 lg:pl-[25vw] lg:pr-[8vw] 2xl:gap-10"
+        >
           {stack.map((item, index) => (
-            <StackItem key={index} item={item} index={index} />
+            <StackCard key={item.name} item={item} index={index} />
           ))}
         </div>
       </div>

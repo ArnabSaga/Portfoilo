@@ -36,7 +36,7 @@ export default function Footer() {
       scaleTo.current = gsap.quickTo(nameRef.current, "scale", { duration: 0.8, ease: "power3" });
     }
     return () => ctx.revert();
-  }, { scope: footerRef });
+  }, { dependencies: [], scope: footerRef });
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (isReducedMotion() || e.pointerType === "touch") return;
