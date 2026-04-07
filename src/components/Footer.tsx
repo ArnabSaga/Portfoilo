@@ -140,7 +140,7 @@ export default function Footer() {
             ref={nameRef}
             className="text-[clamp(5rem,25vw,30rem)] font-syne font-extrabold uppercase tracking-tighter text-foreground leading-[0.7] select-none pointer-events-auto cursor-default mix-blend-difference"
         >
-          {/* Arnab */}
+          AAD
         </div>
       </div>
 
