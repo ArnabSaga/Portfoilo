@@ -12,14 +12,11 @@ const rotatingTaglines = [
 
 export default function Hero() {
   const container = useRef<HTMLElement>(null);
-  const titleWrapRef = useRef<HTMLDivElement>(null);
-  const taglineWrapRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const parallaxCircleRef = useRef<HTMLDivElement>(null);
   const parallaxSquareRef = useRef<HTMLDivElement>(null);
   const scrollCueRef = useRef<HTMLDivElement>(null);
-  const availabilityRef = useRef<HTMLDivElement>(null);
 
   const xTo = useRef<((value: number) => void) | null>(null);
   const yTo = useRef<((value: number) => void) | null>(null);
@@ -28,35 +25,31 @@ export default function Hero() {
     () => {
       if (
         !container.current ||
-        !titleWrapRef.current ||
-        !taglineWrapRef.current ||
         !lensRef.current ||
         !parallaxCircleRef.current ||
         !parallaxSquareRef.current ||
-        !scrollCueRef.current ||
-        !availabilityRef.current
+        !scrollCueRef.current
       ) {
         return;
       }
 
       const reduced = isReducedMotion();
+      const mm = gsap.matchMedia();
 
-      const titleLines = gsap.utils.toArray<HTMLElement>(".hero-title-line");
       const titleWords = gsap.utils.toArray<HTMLElement>(".hero-title-word");
       const introItems = gsap.utils.toArray<HTMLElement>(".hero-intro");
       const metaItems = gsap.utils.toArray<HTMLElement>(".hero-meta");
       const taglineItems = gsap.utils.toArray<HTMLElement>(".tagline-item");
 
-      gsap.set(titleLines, { overflow: "hidden" });
       gsap.set(titleWords, { yPercent: 110, opacity: 0 });
-      gsap.set(introItems, { y: 28, opacity: 0 });
-      gsap.set(metaItems, { y: 22, opacity: 0 });
+      gsap.set(introItems, { y: 24, opacity: 0 });
+      gsap.set(metaItems, { y: 20, opacity: 0 });
       gsap.set(taglineItems, { opacity: 0 });
 
       if (!reduced) {
         gsap.set(lensRef.current, {
           opacity: 0,
-          scale: 0.72,
+          scale: 0.76,
           xPercent: -50,
           yPercent: -50,
         });
@@ -64,13 +57,15 @@ export default function Hero() {
         gsap.set(lensRef.current, { display: "none" });
       }
 
-      const introTl = gsap.timeline({ defaults: { ease: EASE_STANDARD } });
+      const introTl = gsap.timeline({
+        defaults: { ease: EASE_STANDARD },
+      });
 
       introTl
         .to(introItems, {
           y: 0,
           opacity: 1,
-          duration: 0.75,
+          duration: 0.7,
           stagger: 0.06,
         })
         .to(
@@ -78,18 +73,18 @@ export default function Hero() {
           {
             yPercent: 0,
             opacity: 1,
-            duration: 1.15,
+            duration: 1.05,
             stagger: 0.08,
             ease: "power4.out",
           },
-          "-=0.35"
+          "-=0.3"
         )
         .to(
           metaItems,
           {
             y: 0,
             opacity: 1,
-            duration: 0.8,
+            duration: 0.75,
             stagger: 0.08,
             ease: "power3.out",
           },
@@ -97,32 +92,31 @@ export default function Hero() {
         );
 
       if (!reduced && taglineItems.length > 0) {
-        const taglineTl = gsap.timeline({ repeat: -1, repeatDelay: 0.15 });
+        const taglineTl = gsap.timeline({ repeat: -1, repeatDelay: 0.2 });
 
         taglineItems.forEach((item) => {
           const words = item.querySelectorAll(".tagline-word");
-
-          gsap.set(words, { y: 18, opacity: 0 });
+          gsap.set(words, { y: 16, opacity: 0 });
 
           taglineTl
             .set(item, { opacity: 1 })
             .to(words, {
               y: 0,
               opacity: 1,
-              stagger: 0.045,
-              duration: 0.72,
+              stagger: 0.04,
+              duration: 0.65,
               ease: "power3.out",
             })
             .to(
               words,
               {
-                y: -14,
+                y: -12,
                 opacity: 0,
-                stagger: 0.025,
-                duration: 0.5,
+                stagger: 0.02,
+                duration: 0.45,
                 ease: "power2.in",
               },
-              "+=2.1"
+              "+=2"
             )
             .set(item, { opacity: 0 });
         });
@@ -134,10 +128,63 @@ export default function Hero() {
         });
       }
 
-      if (!reduced) {
+      mm.add("(min-width: 1025px)", () => {
+        if (!reduced) {
+          gsap.to(parallaxCircleRef.current, {
+            yPercent: -14,
+            rotate: 12,
+            ease: "none",
+            scrollTrigger: {
+              trigger: container.current,
+              start: "top top",
+              end: "bottom top",
+              scrub: true,
+            },
+          });
+
+          gsap.to(parallaxSquareRef.current, {
+            yPercent: 10,
+            rotate: -10,
+            ease: "none",
+            scrollTrigger: {
+              trigger: container.current,
+              start: "top top",
+              end: "bottom top",
+              scrub: true,
+            },
+          });
+
+          gsap.to(scrollCueRef.current, {
+            y: 8,
+            repeat: -1,
+            yoyo: true,
+            duration: 1.5,
+            ease: "sine.inOut",
+          });
+
+          xTo.current = gsap.quickTo(lensRef.current, "x", {
+            duration: 0.45,
+            ease: "power3.out",
+          });
+
+          yTo.current = gsap.quickTo(lensRef.current, "y", {
+            duration: 0.45,
+            ease: "power3.out",
+          });
+        }
+      });
+
+      mm.add("(max-width: 1024px)", () => {
+        gsap.to(scrollCueRef.current, {
+          y: 6,
+          repeat: -1,
+          yoyo: true,
+          duration: 1.6,
+          ease: "sine.inOut",
+        });
+
         gsap.to(parallaxCircleRef.current, {
-          yPercent: -14,
-          rotate: 12,
+          yPercent: -6,
           ease: "none",
           scrollTrigger: {
             trigger: container.current,
@@ -148,8 +195,7 @@ export default function Hero() {
         });
 
         gsap.to(parallaxSquareRef.current, {
-          yPercent: 10,
-          rotate: -10,
+          yPercent: 5,
           ease: "none",
           scrollTrigger: {
             trigger: container.current,
@@ -158,32 +204,17 @@ export default function Hero() {
             scrub: true,
           },
         });
+      });
 
-        gsap.to(scrollCueRef.current, {
-          y: 8,
-          repeat: -1,
-          yoyo: true,
-          duration: 1.4,
-          ease: "sine.inOut",
-        });
-
-        xTo.current = gsap.quickTo(lensRef.current, "x", {
-          duration: 0.45,
-          ease: "power3.out",
-        });
-
-        yTo.current = gsap.quickTo(lensRef.current, "y", {
-          duration: 0.45,
-          ease: "power3.out",
-        });
-      }
+      return () => mm.revert();
     },
     { scope: container }
   );
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === "touch" || isReducedMotion()) return;
+    if (e.pointerType !== "mouse" || isReducedMotion()) return;
     if (!container.current || !xTo.current || !yTo.current) return;
+    if (window.innerWidth < 1025) return;
 
     const rect = container.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -195,6 +226,7 @@ export default function Hero() {
 
   const handlePointerEnter = useCallback(() => {
     if (isReducedMotion() || !lensRef.current) return;
+    if (window.innerWidth < 1025) return;
 
     gsap.to(lensRef.current, {
       opacity: 1,
@@ -211,7 +243,7 @@ export default function Hero() {
 
     gsap.to(lensRef.current, {
       opacity: 0,
-      scale: 0.72,
+      scale: 0.76,
       duration: 0.4,
       ease: "power3.out",
     });
@@ -225,7 +257,7 @@ export default function Hero() {
     <section
       id="hero"
       ref={container}
-      className="relative flex min-h-screen items-center overflow-hidden border-b border-border-custom bg-background px-[6vw] pb-20 pt-32"
+      className="relative flex min-h-screen items-center overflow-hidden border-b border-border-custom bg-background px-4 pb-16 pt-28 sm:px-6 sm:pb-18 sm:pt-32 md:px-[6vw] md:pb-20 md:pt-36"
       onPointerMove={handlePointerMove}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
@@ -233,7 +265,7 @@ export default function Hero() {
       {!isReducedMotion() && (
         <div
           ref={lensRef}
-          className="pointer-events-none absolute left-0 top-0 z-30 h-56 w-56 overflow-hidden rounded-full border border-foreground/10 shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+          className="pointer-events-none absolute left-0 top-0 z-30 hidden h-44 w-44 overflow-hidden rounded-full border border-foreground/10 shadow-[0_24px_80px_rgba(0,0,0,0.18)] lg:block xl:h-52 xl:w-52 2xl:h-56 2xl:w-56"
         >
           <video
             ref={videoRef}
@@ -244,38 +276,35 @@ export default function Hero() {
             className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
           />
           <div className="absolute inset-0 bg-foreground/10 mix-blend-overlay" />
-          <div className="absolute inset-0 border border-white/15 rounded-full" />
+          <div className="absolute inset-0 rounded-full border border-white/15" />
         </div>
       )}
 
       <div
         ref={parallaxCircleRef}
-        className="pointer-events-none absolute right-[10%] top-[18%] z-0 h-56 w-56 rounded-full border border-foreground/6"
+        className="pointer-events-none absolute right-[6%] top-[12%] z-0 h-24 w-24 rounded-full border border-foreground/6 sm:h-32 sm:w-32 md:h-40 md:w-40 xl:h-56 xl:w-56"
       />
 
       <div
         ref={parallaxSquareRef}
-        className="pointer-events-none absolute bottom-[14%] left-[7%] z-0 h-40 w-40 rotate-12 border border-foreground/6"
+        className="pointer-events-none absolute bottom-[12%] left-[4%] z-0 h-20 w-20 rotate-12 border border-foreground/6 sm:h-24 sm:w-24 md:h-28 md:w-28 xl:h-40 xl:w-40"
       />
 
       <div className="relative z-10 mx-auto w-full max-w-screen-2xl">
-        <div
-          ref={availabilityRef}
-          className="hero-intro mb-10 inline-flex items-center border border-foreground/18 px-4 py-2"
-        >
-          <span className="font-inter text-[10px] font-bold uppercase tracking-[0.45em] text-foreground/78">
+        <div className="hero-intro mb-8 inline-flex items-center border border-foreground/18 px-3 py-2 sm:px-4">
+          <span className="font-inter text-[9px] font-bold uppercase tracking-[0.38em] text-foreground/78 sm:text-[10px] sm:tracking-[0.45em]">
             Available for Freelance — 2026
           </span>
         </div>
 
-        <div ref={titleWrapRef}>
+        <div>
           {titleLines.map((line, lineIndex) => (
-            <div key={lineIndex} className="hero-title-line leading-none">
-              <div className="flex flex-wrap items-end gap-x-5">
+            <div key={lineIndex} className="leading-none">
+              <div className="flex flex-wrap items-end gap-x-4 sm:gap-x-5">
                 {line.map((word, wordIndex) => (
                   <span
                     key={`${lineIndex}-${wordIndex}`}
-                    className="hero-title-word font-syne text-[clamp(3.2rem,11vw,11rem)] font-extrabold uppercase tracking-[-0.08em] text-foreground leading-[0.82]"
+                    className="hero-title-word whitespace-nowrap font-syne text-[clamp(3rem,13vw,11rem)] font-extrabold uppercase leading-[0.82] tracking-[-0.08em] text-foreground"
                   >
                     {word}
                   </span>
@@ -285,23 +314,20 @@ export default function Hero() {
           ))}
         </div>
 
-        <div className="mt-20 flex flex-col justify-between gap-14 md:mt-24 md:flex-row md:items-end">
+        <div className="mt-12 flex flex-col gap-10 sm:mt-14 md:mt-16 md:gap-12 lg:mt-20 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-[760px]">
-            <div className="hero-meta text-[clamp(1.9rem,3vw,3.4rem)] font-inter font-medium uppercase leading-[1.02] tracking-[-0.04em] text-foreground">
+            <div className="hero-meta text-[clamp(1.35rem,4.8vw,3.4rem)] font-inter font-medium uppercase leading-[1.04] tracking-[-0.04em] text-foreground">
               Creative Web Developer
             </div>
 
-            <div
-              ref={taglineWrapRef}
-              className="hero-meta relative mt-4 h-[1.3em] overflow-hidden text-[clamp(1.6rem,2.4vw,2.8rem)] font-inter font-normal leading-[1.05] tracking-[-0.03em] text-foreground/42"
-            >
+            <div className="hero-meta relative mt-3 h-[2.5em] overflow-hidden text-[clamp(1.05rem,3.6vw,2.8rem)] font-inter font-normal leading-[1.08] tracking-[-0.03em] text-foreground/42 sm:mt-4 sm:h-[1.35em]">
               {rotatingTaglines.map((phrase, index) => (
                 <div
                   key={index}
-                  className="tagline-item absolute left-0 top-0 flex flex-wrap gap-x-2"
+                  className="tagline-item absolute left-0 top-0 flex max-w-[18ch] flex-wrap gap-x-2 sm:max-w-none"
                 >
                   {phrase.split(" ").map((word, wordIndex) => (
-                    <span key={wordIndex} className="tagline-word inline-block">
+                    <span key={wordIndex} className="tagline-word inline-block whitespace-nowrap">
                       {word}
                     </span>
                   ))}
@@ -310,21 +336,21 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-8 md:items-end">
+          <div className="flex flex-col items-start gap-6 sm:gap-7 lg:items-end lg:gap-8">
             <div className="hero-meta flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               <span className="h-1.5 w-1.5 rounded-full bg-foreground/45" />
               <span className="h-1.5 w-1.5 rounded-full bg-foreground/18" />
             </div>
 
-            <div className="hero-meta flex flex-col items-start md:items-end">
-              <span className="font-inter text-[10px] font-bold uppercase tracking-[0.38em] text-foreground/36">
+            <div className="hero-meta flex flex-col items-start lg:items-end">
+              <span className="font-inter text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/36 sm:text-[10px] sm:tracking-[0.38em]">
                 Scroll to Explore
               </span>
 
               <div
                 ref={scrollCueRef}
-                className="mt-4 flex h-14 w-14 items-center justify-center rounded-full border border-foreground/14"
+                className="mt-3 flex h-12 w-12 items-center justify-center rounded-full border border-foreground/14 sm:mt-4 sm:h-14 sm:w-14"
               >
                 <svg
                   width="14"

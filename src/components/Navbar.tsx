@@ -18,9 +18,11 @@ const navLinks = [
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const desktopMenuRef = useRef<HTMLDivElement>(null);
   const resumeWrapRef = useRef<HTMLDivElement>(null);
   const resumeBtnRef = useRef<HTMLButtonElement>(null);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+  const mobileMenuBtnRef = useRef<HTMLButtonElement>(null);
 
   const danceTweenRef = useRef<gsap.core.Tween | null>(null);
   const pulseTweenRef = useRef<gsap.core.Tween | null>(null);
@@ -33,17 +35,23 @@ export default function Navbar() {
 
   const [ctaState, setCtaState] = useState<CtaState>("idle");
   const [ctaText, setCtaText] = useState("Resume");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const stopCtaAnimations = useCallback(() => {
+    danceTweenRef.current?.kill();
+    pulseTweenRef.current?.kill();
+    angerTweenRef.current?.kill();
+  }, []);
 
   const triggerWaitingState = useCallback(() => {
     if (!resumeBtnRef.current || ctaStateRef.current === "clicked") return;
+    if (window.innerWidth < 768) return;
 
     ctaStateRef.current = "waiting";
     setCtaState("waiting");
     setCtaText("Click me — I’ve been waiting");
 
-    danceTweenRef.current?.kill();
-    pulseTweenRef.current?.kill();
-    angerTweenRef.current?.kill();
+    stopCtaAnimations();
 
     gsap.to(resumeBtnRef.current, {
       paddingLeft: 28,
@@ -71,18 +79,17 @@ export default function Navbar() {
       repeatDelay: 1.1,
       ease: "power1.inOut",
     });
-  }, []);
+  }, [stopCtaAnimations]);
 
   const triggerAngryState = useCallback(() => {
     if (!resumeBtnRef.current || ctaStateRef.current === "clicked") return;
+    if (window.innerWidth < 768) return;
 
     ctaStateRef.current = "angry";
     setCtaState("angry");
     setCtaText("Why didn’t you click me?");
 
-    danceTweenRef.current?.kill();
-    pulseTweenRef.current?.kill();
-    angerTweenRef.current?.kill();
+    stopCtaAnimations();
 
     angerTweenRef.current = gsap.timeline({ repeat: -1, repeatDelay: 1.4 });
 
@@ -99,7 +106,7 @@ export default function Navbar() {
       duration: 0.35,
       ease: "power3.out",
     });
-  }, []);
+  }, [stopCtaAnimations]);
 
   const handleResumeClick = useCallback(() => {
     if (!resumeBtnRef.current) return;
@@ -107,9 +114,7 @@ export default function Navbar() {
     if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
     if (angryTimerRef.current) clearTimeout(angryTimerRef.current);
 
-    danceTweenRef.current?.kill();
-    pulseTweenRef.current?.kill();
-    angerTweenRef.current?.kill();
+    stopCtaAnimations();
 
     ctaStateRef.current = "clicked";
     setCtaState("clicked");
@@ -129,13 +134,13 @@ export default function Navbar() {
       });
 
     window.open("/resume.pdf", "_blank");
-  }, []);
+  }, [stopCtaAnimations]);
 
   useEffect(() => {
     if (
       !navRef.current ||
       !logoRef.current ||
-      !menuRef.current ||
+      !desktopMenuRef.current ||
       !resumeWrapRef.current ||
       !resumeBtnRef.current
     ) {
@@ -143,18 +148,18 @@ export default function Navbar() {
     }
 
     const ctx = gsap.context(() => {
-      gsap.set([logoRef.current, menuRef.current, resumeWrapRef.current], {
-        y: -24,
+      gsap.set([logoRef.current, desktopMenuRef.current, resumeWrapRef.current], {
+        y: -20,
         opacity: 0,
       });
 
-      gsap.to([logoRef.current, menuRef.current, resumeWrapRef.current], {
+      gsap.to([logoRef.current, desktopMenuRef.current, resumeWrapRef.current], {
         y: 0,
         opacity: 1,
-        duration: 0.85,
+        duration: 0.8,
         stagger: 0.08,
         ease: "power3.out",
-        delay: 0.15,
+        delay: 0.1,
       });
     }, navRef);
 
@@ -172,45 +177,89 @@ export default function Navbar() {
       if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
       if (angryTimerRef.current) clearTimeout(angryTimerRef.current);
 
-      danceTweenRef.current?.kill();
-      pulseTweenRef.current?.kill();
-      angerTweenRef.current?.kill();
+      stopCtaAnimations();
     };
-  }, [triggerWaitingState, triggerAngryState]);
+  }, [triggerWaitingState, triggerAngryState, stopCtaAnimations]);
+
+  useEffect(() => {
+    if (!mobilePanelRef.current) return;
+
+    if (menuOpen) {
+      gsap.set(mobilePanelRef.current, { display: "block" });
+      gsap.fromTo(
+        mobilePanelRef.current,
+        { opacity: 0, y: -12 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.3,
+          ease: "power3.out",
+        }
+      );
+    } else {
+      gsap.to(mobilePanelRef.current, {
+        opacity: 0,
+        y: -10,
+        duration: 0.24,
+        ease: "power2.out",
+        onComplete: () => {
+          if (mobilePanelRef.current) {
+            gsap.set(mobilePanelRef.current, { display: "none" });
+          }
+        },
+      });
+    }
+  }, [menuOpen]);
+
+  const handleMobileLinkClick = () => {
+    setMenuOpen(false);
+  };
+
+  const ctaLabel =
+    ctaState === "idle"
+      ? "Resume"
+      : ctaState === "waiting"
+        ? "Click me"
+        : ctaState === "angry"
+          ? "Click me?"
+          : "Opening";
 
   return (
     <nav
       ref={navRef}
-      className="pointer-events-none fixed left-0 top-0 z-50 w-full px-4 py-4 md:px-6 md:py-5"
+      className="pointer-events-none fixed left-0 top-0 z-50 w-full px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-5"
     >
-      <div className="flex items-center justify-between gap-4">
-        <div ref={logoRef} className="pointer-events-auto">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        {/* Logo */}
+        <div ref={logoRef} className="pointer-events-auto shrink-0">
           <Link
             href="#hero"
-            className="group relative flex items-center justify-center rounded-2xl border border-black/10 bg-white/70 px-2.5 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-500 hover:border-black/15 hover:bg-white/82"
+            className="group relative flex items-center justify-center rounded-2xl border border-black/10 bg-white/72 px-2 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-500 hover:border-black/15 hover:bg-white/84 sm:px-2.5 sm:py-2.5"
           >
             <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0.18))]" />
             <Image
               src="/logo/logo.jpg"
               alt="AAD Logo"
-              width={50}
-              height={50}
-              className="relative z-10 object-contain"
+              width={44}
+              height={44}
+              className="relative z-10 object-contain sm:h-[50px] sm:w-[50px]"
+              style={{ width: "auto", height: "auto" }}
             />
           </Link>
         </div>
 
+        {/* Desktop menu */}
         <div
-          ref={menuRef}
-          className="pointer-events-auto hidden items-center rounded-full border border-black/10 bg-white/70 px-7 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl md:flex"
+          ref={desktopMenuRef}
+          className="pointer-events-auto relative hidden items-center rounded-full border border-black/10 bg-white/72 px-6 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl md:flex lg:px-7"
         >
           <div className="absolute inset-0 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.2))]" />
-          <div className="relative z-10 flex items-center gap-8 lg:gap-10">
+          <div className="relative z-10 flex items-center gap-6 lg:gap-8 xl:gap-10">
             {navLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative font-inter text-[10px] font-semibold uppercase tracking-[0.22em] text-black/55 transition-colors duration-300 hover:text-black"
+                className="group relative font-inter text-[10px] font-semibold uppercase tracking-[0.2em] text-black/58 transition-colors duration-300 hover:text-black"
               >
                 {item.label}
                 <span className="absolute -bottom-1 left-1/2 h-px w-0 -translate-x-1/2 bg-black/80 transition-all duration-300 group-hover:w-full" />
@@ -219,27 +268,83 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div ref={resumeWrapRef} className="pointer-events-auto">
+        {/* Right controls */}
+        <div className="pointer-events-auto flex items-center gap-2 sm:gap-3">
+          {/* Mobile menu button */}
           <button
-            ref={resumeBtnRef}
-            onClick={handleResumeClick}
-            aria-label={ctaText}
-            className={`group relative overflow-hidden border px-6 py-3.5 font-syne text-[10px] font-bold uppercase tracking-[0.22em] shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-colors duration-300 ${
-              ctaState === "idle"
-                ? "rounded-2xl border-black/10 bg-white/82 text-black"
-                : ctaState === "waiting"
-                  ? "rounded-full border-black/10 bg-white/88 text-black"
-                  : ctaState === "angry"
-                    ? "rounded-[22px] border-[#d8b1a7] bg-[#f3d1c8] text-black"
-                    : "rounded-full border-black/10 bg-white/88 text-black"
-            }`}
+            ref={mobileMenuBtnRef}
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-black/10 bg-white/78 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 hover:bg-white/88 md:hidden"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
-            <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.12))]" />
-            <span className="relative z-10 flex items-center gap-2">
-              <span>{ctaText}</span>
-              {ctaState !== "idle" && <span className="text-[11px] leading-none">→</span>}
-            </span>
+            <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.16))]" />
+            <div className="relative z-10 flex flex-col gap-[4px]">
+              <span
+                className={`h-[1.5px] w-4 bg-black transition-transform duration-300 ${
+                  menuOpen ? "translate-y-[5.5px] rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`h-[1.5px] w-4 bg-black transition-opacity duration-300 ${
+                  menuOpen ? "opacity-0" : "opacity-100"
+                }`}
+              />
+              <span
+                className={`h-[1.5px] w-4 bg-black transition-transform duration-300 ${
+                  menuOpen ? "-translate-y-[5.5px] -rotate-45" : ""
+                }`}
+              />
+            </div>
           </button>
+
+          {/* Resume CTA */}
+          <div ref={resumeWrapRef}>
+            <button
+              ref={resumeBtnRef}
+              onClick={handleResumeClick}
+              aria-label={ctaText}
+              className={`group relative overflow-hidden border px-4 py-3 font-syne text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-colors duration-300 sm:px-5 sm:py-3.5 sm:tracking-[0.22em] ${
+                ctaState === "idle"
+                  ? "rounded-2xl border-black/10 bg-white/84 text-black"
+                  : ctaState === "waiting"
+                    ? "rounded-full border-black/10 bg-white/90 text-black"
+                    : ctaState === "angry"
+                      ? "rounded-[22px] border-[#d8b1a7] bg-[#f3d1c8] text-black"
+                      : "rounded-full border-black/10 bg-white/90 text-black"
+              }`}
+            >
+              <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.12))]" />
+              <span className="relative z-10 flex items-center gap-2">
+                <span className="hidden sm:inline">{ctaText}</span>
+                <span className="sm:hidden">{ctaLabel}</span>
+                {ctaState !== "idle" && <span className="text-[11px] leading-none">→</span>}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile dropdown panel */}
+      <div ref={mobilePanelRef} className="pointer-events-auto hidden pt-3 md:hidden">
+        <div className="overflow-hidden rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.1)] backdrop-blur-xl">
+          <div className="mb-3 font-inter text-[9px] font-semibold uppercase tracking-[0.34em] text-black/34">
+            Navigation
+          </div>
+
+          <div className="flex flex-col gap-1">
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleMobileLinkClick}
+                className="rounded-2xl px-3 py-3 font-syne text-lg font-bold uppercase tracking-[-0.03em] text-black transition-colors duration-300 hover:bg-black/4"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </nav>
