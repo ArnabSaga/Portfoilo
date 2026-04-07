@@ -8,23 +8,23 @@ import { useEffect, useRef, useState } from "react";
 const projects = [
   {
     id: "01",
-    title: "OpScore",
+    title: "OpsCore",
     category: "SaaS Platform",
     description:
       "OpScore is a comprehensive platform for managing and analyzing sports data. It provides a seamless experience for users to track their performance, view statistics, and stay updated with the latest trends.",
-    image: "/projects/opscore.png",
+    image: "/project/opscore.jpg",
     tech: ["Next.js", "PostgreSQL", "TypeScript", "Shadcn/ui", "Gsap"],
-    live: "opscore-frontend.vercel.app",
+    live: "https://opscore-frontend.vercel.app",
   },
   {
     id: "02",
-    title: "Medi Store",
+    title: "Medi-Store",
     category: "Fullstack Platform",
     description:
       "A comprehensive e-commerce platform for medical supplies, featuring a robust admin dashboard, secure payment gateway integration, and an intuitive user interface.",
-    image: "/projects/eventsphere.png",
+    image: "/project/medistore.jpg",
     tech: ["Next.js", "PostgreSQL", "TypeScript", "Shadcn/ui"],
-    live: "medi-store-frontend-puce.vercel.app",
+    live: "https://medi-store-frontend-puce.vercel.app",
   },
   {
     id: "03",
@@ -32,9 +32,9 @@ const projects = [
     category: "Gaming Platform",
     description:
       "Awwer is a comprehensive platform for managing and analyzing sports data. It provides a seamless experience for users to track their performance, view statistics, and stay updated with the latest trends.",
-    image: "/projects/awwer.png",
+    image: "/project/awwer.jpg",
     tech: ["React", "JavaScript", "GSAP", "Tailwind"],
-    live: "awwer.vercel.app",
+    live: "https://awwer.vercel.app",
   },
   {
     id: "04",
@@ -42,9 +42,9 @@ const projects = [
     category: "E-Commerce",
     description:
       "A luxury bar retail experience focused on sensory storytelling and minimalist micro-interactions.",
-    image: "/projects/velvet-pour.png",
+    image: "/project/velvet-pour.jpg",
     tech: ["React", "JavaScript", "GSAP"],
-    live: "velvet-pour-gamma-nine.vercel.app",
+    live: "https://velvet-pour-gamma-nine.vercel.app",
   },
   {
     id: "05",
@@ -52,19 +52,19 @@ const projects = [
     category: "AI Platform",
     description:
       "MeetAI is a comprehensive platform for managing and analyzing sports data. It provides a seamless experience for users to track their performance, view statistics, and stay updated with the latest trends.",
-    image: "/projects/meetai.png",
+    image: "/project/meetai.jpg",
     tech: ["React", "JavaScript", "GSAP"],
     live: "On Progress",
   },
   {
     id: "06",
-    title: "Velvet-Pour",
+    title: "Path-To-Peace",
     category: "E-Commerce",
     description:
       "A luxury bar retail experience focused on sensory storytelling and minimalist micro-interactions.",
-    image: "/projects/velvet-pour.png",
+    image: "/project/path-to-peace.jpg",
     tech: ["React", "JavaScript", "GSAP"],
-    live: "velvet-pour-gamma-nine.vercel.app",
+    live: "https://velvet-pour-gamma-nine.vercel.app",
   },
 ];
 
@@ -205,6 +205,26 @@ export default function Projects() {
                   <p className="text-lg font-inter text-foreground/60 leading-relaxed max-w-sm mb-10">
                     {project.description}
                   </p>
+                  
+                  <div className="flex items-center gap-8 mb-10">
+                    {project.live !== "On Progress" && (
+                      <a 
+                        href={project.live} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="group/link flex items-center gap-2 font-syne font-bold uppercase tracking-tighter text-foreground text-lg border-b border-foreground/20 hover:border-foreground transition-all duration-300"
+                      >
+                        Live View
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover/link:translate-x-1 group-hover/link:-translate-y-1 transition-transform duration-300">
+                          <path d="M1 11L11 1M11 1H3.5M11 1V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </a>
+                    )}
+                    <span className="font-syne font-bold uppercase tracking-tighter text-foreground/20 text-lg italic">
+                      {project.live === "On Progress" ? "Coming Soon" : "View Case Study"}
+                    </span>
+                  </div>
+
                   <div className="flex flex-wrap gap-3">
                     {project.tech.map((t) => (
                       <span
