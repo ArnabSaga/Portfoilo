@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type CtaState = "idle" | "waiting" | "angry" | "clicked";
+type CtaState = "idle" | "waiting" | "angry" | "happy" | "clicked";
 
 const navLinks = [
   { href: "#hero", label: "Home" },
@@ -31,6 +31,8 @@ export default function Navbar() {
   const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const angryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const happyDanceTweenRef = useRef<gsap.core.Tween | null>(null);
+
   const ctaStateRef = useRef<CtaState>("idle");
 
   const [ctaState, setCtaState] = useState<CtaState>("idle");
@@ -41,6 +43,7 @@ export default function Navbar() {
     danceTweenRef.current?.kill();
     pulseTweenRef.current?.kill();
     angerTweenRef.current?.kill();
+    happyDanceTweenRef.current?.kill();
   }, []);
 
   const triggerWaitingState = useCallback(() => {
@@ -116,24 +119,49 @@ export default function Navbar() {
 
     stopCtaAnimations();
 
-    ctaStateRef.current = "clicked";
-    setCtaState("clicked");
-    setCtaText("Opening Resume");
+    ctaStateRef.current = "happy";
+    setCtaState("happy");
+    setCtaText("Yay! You clicked me");
 
-    gsap
-      .timeline()
+    const tl = gsap.timeline();
+
+    tl.to(resumeBtnRef.current, {
+      y: -12,
+      scale: 1.05,
+      rotation: 5,
+      duration: 0.15,
+      ease: "power2.out",
+    })
       .to(resumeBtnRef.current, {
-        scale: 0.96,
-        duration: 0.09,
-        ease: "power2.out",
+        y: 0,
+        scale: 1,
+        rotation: -5,
+        duration: 0.12,
+        ease: "bounce.out",
       })
       .to(resumeBtnRef.current, {
-        scale: 1,
-        duration: 0.18,
-        ease: "power2.out",
+        rotation: 0,
+        duration: 0.1,
+        onComplete: () => {
+          if (!resumeBtnRef.current) return;
+          // Start slow dancing
+          happyDanceTweenRef.current = gsap.to(resumeBtnRef.current, {
+            rotation: 3,
+            duration: 2.2,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+        },
       });
 
-    window.open("/resume.pdf", "_blank");
+    // Small delay before opening to let the animation play
+    setTimeout(() => {
+      window.open(
+        "https://drive.google.com/file/d/1lx0CPkwne9NsgThp14uKjaq8T56UJM9q/view?usp=sharing",
+        "_blank"
+      );
+    }, 200);
   }, [stopCtaAnimations]);
 
   useEffect(() => {
@@ -222,7 +250,9 @@ export default function Navbar() {
         ? "Click me"
         : ctaState === "angry"
           ? "Click me?"
-          : "Opening";
+          : ctaState === "happy"
+            ? "Yay!"
+            : "Opening";
 
   return (
     <nav
@@ -312,7 +342,9 @@ export default function Navbar() {
                     ? "rounded-full border-black/10 bg-white/90 text-black"
                     : ctaState === "angry"
                       ? "rounded-[22px] border-[#d8b1a7] bg-[#f3d1c8] text-black"
-                      : "rounded-full border-black/10 bg-white/90 text-black"
+                      : ctaState === "happy"
+                        ? "rounded-full border-[#b5d8b1] bg-[#d1f3c8] text-black"
+                        : "rounded-full border-black/10 bg-white/90 text-black"
               }`}
             >
               <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.12))]" />
