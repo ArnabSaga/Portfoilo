@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRef } from "react";
 
 const stats = [
-  { value: "03+", label: "Years Building" },
+  // { value: "03+", label: "Years Building" },
   { value: "06+", label: "Core Projects" },
   { value: "100%", label: "Architecture Focused" },
 ];
@@ -14,7 +14,7 @@ const stats = [
 const socials = [
   { name: "Github", url: "https://github.com/ArnabSaga" },
   { name: "LinkedIn", url: "https://www.linkedin.com/in/achyuta1/" },
-  { name: "Instagram", url: "https://www.instagram.com/rz_arnab_/" },
+  // { name: "Instagram", url: "https://www.instagram.com/rz_arnab_/" },
 ];
 
 export default function About() {

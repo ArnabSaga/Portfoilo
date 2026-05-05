@@ -158,7 +158,7 @@ export default function Navbar() {
     // Small delay before opening to let the animation play
     setTimeout(() => {
       window.open(
-        "https://drive.google.com/file/d/1lx0CPkwne9NsgThp14uKjaq8T56UJM9q/view?usp=sharing",
+        "https://drive.google.com/file/d/1-OTjg0DntIeH_sG5ZEtQ247yqDl8sxVv/view?usp=sharing",
         "_blank"
       );
     }, 200);
