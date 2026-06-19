@@ -1,70 +1,79 @@
-"use client";
+'use client';
 
-import { DURATION_BASE, EASE_STANDARD, gsap } from "@/lib/gsap";
-import { useGSAP } from "@gsap/react";
-import Image from "next/image";
-import { useRef } from "react";
+import { DURATION_BASE, EASE_STANDARD, gsap } from '@/lib/gsap';
+import { useGSAP } from '@gsap/react';
+import Image from 'next/image';
+import { useRef } from 'react';
 
 const projects = [
   {
-    id: "01",
-    title: "OpsCore",
-    category: "SaaS Platform",
+    id: '01',
+    title: 'OpsCore',
+    category: 'SaaS Platform',
     description:
-      "A multi-tenant SaaS platform focused on workspace management, RBAC, billing, and production-style architecture with a premium product experience.",
-    image: "/project/opscore.jpg",
-    tech: ["Next.js", "PostgreSQL", "TypeScript", "shadcn/ui", "GSAP"],
-    live: "https://opscore-frontend.vercel.app",
+      'A multi-tenant SaaS platform focused on workspace management, RBAC, billing, and production-style architecture with a premium product experience.',
+    image: '/project/opscore.jpg',
+    tech: ['Next.js', 'PostgreSQL', 'TypeScript', 'shadcn/ui', 'GSAP'],
+    live: 'https://opscore-frontend.vercel.app',
   },
   {
-    id: "02",
-    title: "Medi-Store",
-    category: "Fullstack Platform",
+    id: '02',
+    title: 'Medi-Store',
+    category: 'Fullstack Platform',
     description:
-      "A medicine commerce platform with admin workflow, inventory logic, secure checkout flow, and a clean, scalable fullstack architecture.",
-    image: "/project/medistore.jpg",
-    tech: ["Next.js", "PostgreSQL", "TypeScript", "shadcn/ui"],
-    live: "https://medi-store-frontend-puce.vercel.app",
+      'A medicine commerce platform with admin workflow, inventory logic, secure checkout flow, and a clean, scalable fullstack architecture.',
+    image: '/project/medistore.jpg',
+    tech: ['Next.js', 'PostgreSQL', 'TypeScript', 'shadcn/ui'],
+    live: 'https://medi-store-frontend-puce.vercel.app',
   },
   {
-    id: "03",
-    title: "Awwer",
-    category: "Gaming Platform",
+    id: '03',
+    title: 'Awwer',
+    category: 'Gaming Platform',
     description:
-      "An interactive gaming-focused experience with expressive motion, bold visual rhythm, and a playful interface structure.",
-    image: "/project/awwer.jpg",
-    tech: ["React", "JavaScript", "GSAP", "Tailwind"],
-    live: "https://awwer.vercel.app",
+      'An interactive gaming-focused experience with expressive motion, bold visual rhythm, and a playful interface structure.',
+    image: '/project/awwer.jpg',
+    tech: ['React', 'JavaScript', 'GSAP', 'Tailwind'],
+    live: 'https://awwer.vercel.app',
   },
   {
-    id: "04",
-    title: "Velvet-Pour",
-    category: "E-Commerce",
+    id: '04',
+    title: 'Velvet-Pour',
+    category: 'E-Commerce',
     description:
-      "A luxury retail experience centered on mood, storytelling, and refined transitions for a more sensory web interaction.",
-    image: "/project/velvet-pour.jpg",
-    tech: ["React", "JavaScript", "GSAP"],
-    live: "https://velvet-pour-gamma-nine.vercel.app",
+      'A luxury retail experience centered on mood, storytelling, and refined transitions for a more sensory web interaction.',
+    image: '/project/velvet-pour.jpg',
+    tech: ['React', 'JavaScript', 'GSAP'],
+    live: 'https://velvet-pour-gamma-nine.vercel.app',
   },
   {
-    id: "05",
-    title: "MeetAI",
-    category: "AI Platform",
+    id: '05',
+    title: 'MeetAI',
+    category: 'AI Platform',
     description:
-      "An AI-first concept platform designed for intelligent meeting workflows, assistant-driven productivity, and future-facing UI.",
-    image: "/project/meetai.jpg",
-    tech: ["React", "JavaScript", "GSAP"],
-    live: "On Progress",
+      'An AI-first concept platform designed for intelligent meeting workflows, assistant-driven productivity, and future-facing UI.',
+    image: '/project/meetai.jpg',
+    tech: ['React', 'JavaScript', 'GSAP'],
+    live: 'On Progress',
   },
   {
-    id: "06",
-    title: "Path-To-Peace",
-    category: "E-Commerce",
+    id: '06',
+    title: 'Path-To-Peace',
+    category: 'E-Commerce',
     description:
-      "A calm and minimal brand experience designed with thoughtful pacing, gentle motion, and spiritual storytelling.",
-    image: "/project/path-to-peace.jpg",
-    tech: ["React", "JavaScript", "GSAP"],
-    live: "https://path-to-peace.vercel.app/",
+      'A calm and minimal brand experience designed with thoughtful pacing, gentle motion, and spiritual storytelling.',
+    image: '/project/path-to-peace.jpg',
+    tech: ['React', 'JavaScript', 'GSAP'],
+    live: 'https://path-to-peace.vercel.app/',
+  },
+  {
+    id: '07',
+    title: 'Monster-Steamer',
+    category: 'E-Commerce',
+    description: 'Premium Carpet Cleaning & Professional Hygiene in San Diego',
+    image: '/project/Monster-Steamer.png',
+    tech: ['React', 'JavaScript', 'GSAP', 'Framer Motion'],
+    live: 'https://monster-steamer-inky.vercel.app/',
   },
 ];
 
@@ -82,12 +91,12 @@ export default function Projects() {
 
       const mm = gsap.matchMedia();
 
-      mm.add("(min-width: 1025px)", () => {
+      mm.add('(min-width: 1025px)', () => {
         const section = sectionRef.current!;
         const trigger = triggerRef.current!;
         const track = trackRef.current!;
-        const cards = gsap.utils.toArray<HTMLElement>(".project-card");
-        const inners = gsap.utils.toArray<HTMLElement>(".project-inner");
+        const cards = gsap.utils.toArray<HTMLElement>('.project-card');
+        const inners = gsap.utils.toArray<HTMLElement>('.project-inner');
 
         const getScrollAmount = () =>
           Math.max(0, track.scrollWidth - window.innerWidth + window.innerWidth * 0.08);
@@ -106,17 +115,17 @@ export default function Projects() {
           ease: EASE_STANDARD,
           scrollTrigger: {
             trigger: section,
-            start: "top 82%",
+            start: 'top 82%',
             once: true,
           },
         });
 
         const horizontalTween = gsap.to(track, {
           x: () => -getScrollAmount(),
-          ease: "none",
+          ease: 'none',
           scrollTrigger: {
             trigger,
-            start: "top top",
+            start: 'top top',
             end: () => `+=${getScrollAmount()}`,
             scrub: 1,
             pin: true,
@@ -134,8 +143,8 @@ export default function Projects() {
             scrollTrigger: {
               trigger: card,
               containerAnimation: horizontalTween,
-              start: "left 82%",
-              end: "center center",
+              start: 'left 82%',
+              end: 'center center',
               scrub: true,
             },
           });
@@ -148,26 +157,26 @@ export default function Projects() {
             scrollTrigger: {
               trigger: card,
               containerAnimation: horizontalTween,
-              start: "center center",
-              end: "right 12%",
+              start: 'center center',
+              end: 'right 12%',
               scrub: true,
             },
           });
         });
 
         inners.forEach((inner) => {
-          const image = inner.querySelector<HTMLElement>(".project-image-wrap");
-          const content = inner.querySelector<HTMLElement>(".project-content");
+          const image = inner.querySelector<HTMLElement>('.project-image-wrap');
+          const content = inner.querySelector<HTMLElement>('.project-content');
 
           if (image) {
             gsap.to(image, {
               yPercent: -8,
-              ease: "none",
+              ease: 'none',
               scrollTrigger: {
                 trigger: inner,
                 containerAnimation: horizontalTween,
-                start: "left right",
-                end: "right left",
+                start: 'left right',
+                end: 'right left',
                 scrub: true,
               },
             });
@@ -176,12 +185,12 @@ export default function Projects() {
           if (content) {
             gsap.to(content, {
               yPercent: -4,
-              ease: "none",
+              ease: 'none',
               scrollTrigger: {
                 trigger: inner,
                 containerAnimation: horizontalTween,
-                start: "left right",
-                end: "right left",
+                start: 'left right',
+                end: 'right left',
                 scrub: true,
               },
             });
@@ -189,8 +198,8 @@ export default function Projects() {
         });
       });
 
-      mm.add("(max-width: 1024px)", () => {
-        gsap.from(".project-card", {
+      mm.add('(max-width: 1024px)', () => {
+        gsap.from('.project-card', {
           opacity: 0,
           y: 42,
           stagger: 0.08,
@@ -198,7 +207,7 @@ export default function Projects() {
           ease: EASE_STANDARD,
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 85%",
+            start: 'top 85%',
             once: true,
           },
         });
@@ -210,7 +219,7 @@ export default function Projects() {
           ease: EASE_STANDARD,
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 88%",
+            start: 'top 88%',
             once: true,
           },
         });
@@ -292,7 +301,7 @@ export default function Projects() {
                         fill
                         className="object-cover grayscale transition-all duration-700 ease-out group-hover:scale-[1.04] group-hover:grayscale-0"
                         sizes="(max-width: 1024px) 100vw, 52vw"
-                        priority={project.id === "01"}
+                        priority={project.id === '01'}
                       />
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.28))]" />
                       <div className="absolute left-5 top-5 rounded-full border border-white/18 bg-black/18 px-4 py-2 backdrop-blur-md md:left-6 md:top-6">
@@ -317,7 +326,7 @@ export default function Projects() {
                     </p>
 
                     <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
-                      {project.live !== "On Progress" ? (
+                      {project.live !== 'On Progress' ? (
                         <a
                           href={project.live}
                           target="_blank"
@@ -349,7 +358,7 @@ export default function Projects() {
                       )}
 
                       <span className="font-syne text-base font-bold uppercase tracking-[-0.02em] text-foreground/22 italic">
-                        {project.live !== "On Progress" ? "View Case Study" : "In Progress"}
+                        {project.live !== 'On Progress' ? 'View Case Study' : 'In Progress'}
                       </span>
                     </div>
 

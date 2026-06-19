@@ -14,8 +14,6 @@ export default function Hero() {
   const container = useRef<HTMLElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const parallaxCircleRef = useRef<HTMLDivElement>(null);
-  const parallaxSquareRef = useRef<HTMLDivElement>(null);
   const scrollCueRef = useRef<HTMLDivElement>(null);
 
   const xTo = useRef<((value: number) => void) | null>(null);
@@ -26,8 +24,6 @@ export default function Hero() {
       if (
         !container.current ||
         !lensRef.current ||
-        !parallaxCircleRef.current ||
-        !parallaxSquareRef.current ||
         !scrollCueRef.current
       ) {
         return;
@@ -130,29 +126,6 @@ export default function Hero() {
 
       mm.add("(min-width: 1025px)", () => {
         if (!reduced) {
-          gsap.to(parallaxCircleRef.current, {
-            yPercent: -14,
-            rotate: 12,
-            ease: "none",
-            scrollTrigger: {
-              trigger: container.current,
-              start: "top top",
-              end: "bottom top",
-              scrub: true,
-            },
-          });
-
-          gsap.to(parallaxSquareRef.current, {
-            yPercent: 10,
-            rotate: -10,
-            ease: "none",
-            scrollTrigger: {
-              trigger: container.current,
-              start: "top top",
-              end: "bottom top",
-              scrub: true,
-            },
-          });
 
           gsap.to(scrollCueRef.current, {
             y: 8,
@@ -181,28 +154,6 @@ export default function Hero() {
           yoyo: true,
           duration: 1.6,
           ease: "sine.inOut",
-        });
-
-        gsap.to(parallaxCircleRef.current, {
-          yPercent: -6,
-          ease: "none",
-          scrollTrigger: {
-            trigger: container.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-
-        gsap.to(parallaxSquareRef.current, {
-          yPercent: 5,
-          ease: "none",
-          scrollTrigger: {
-            trigger: container.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: true,
-          },
         });
       });
 
@@ -280,15 +231,7 @@ export default function Hero() {
         </div>
       )}
 
-      <div
-        ref={parallaxCircleRef}
-        className="pointer-events-none absolute right-[6%] top-[12%] z-0 h-24 w-24 rounded-full border border-foreground/6 sm:h-32 sm:w-32 md:h-40 md:w-40 xl:h-56 xl:w-56"
-      />
 
-      <div
-        ref={parallaxSquareRef}
-        className="pointer-events-none absolute bottom-[12%] left-[4%] z-0 h-20 w-20 rotate-12 border border-foreground/6 sm:h-24 sm:w-24 md:h-28 md:w-28 xl:h-40 xl:w-40"
-      />
 
       <div className="relative z-10 mx-auto w-full max-w-screen-2xl">
         <div className="hero-intro mb-8 inline-flex items-center border border-foreground/18 px-3 py-2 sm:px-4">
