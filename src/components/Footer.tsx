@@ -141,8 +141,7 @@ export default function Footer() {
                 alt="AAD Logo"
                 width={58}
                 height={58}
-                className="object-contain sm:h-16 sm:w-16"
-                style={{ width: "auto", height: "auto" }}
+                className="object-contain h-[58px] w-[58px] sm:h-16 sm:w-16"
               />
             </div>
 
