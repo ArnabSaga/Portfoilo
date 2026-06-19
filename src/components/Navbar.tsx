@@ -272,7 +272,7 @@ export default function Navbar() {
               alt="AAD Logo"
               width={44}
               height={44}
-              className="relative z-10 object-contain h-11 w-11 sm:h-[50px] sm:w-[50px]"
+              className="relative z-10 object-contain h-11 w-auto sm:h-[50px] sm:w-auto"
             />
           </Link>
         </div>
