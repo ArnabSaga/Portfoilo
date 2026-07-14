@@ -52,7 +52,7 @@ export default function Navbar() {
 
     ctaStateRef.current = "waiting";
     setCtaState("waiting");
-    setCtaText("Click me — I’ve been waiting");
+    setCtaText("View technical resume");
 
     stopCtaAnimations();
 
@@ -90,18 +90,16 @@ export default function Navbar() {
 
     ctaStateRef.current = "angry";
     setCtaState("angry");
-    setCtaText("Why didn’t you click me?");
+    setCtaText("See system case notes");
 
     stopCtaAnimations();
 
-    angerTweenRef.current = gsap.timeline({ repeat: -1, repeatDelay: 1.4 });
+    angerTweenRef.current = gsap.timeline({ repeat: -1, repeatDelay: 2.4 });
 
     angerTweenRef.current
-      .to(resumeBtnRef.current, { x: -4, duration: 0.07, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 4, duration: 0.07, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: -3, duration: 0.06, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 3, duration: 0.06, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 0, scale: 1.03, duration: 0.18, ease: "power2.out" })
+      .to(resumeBtnRef.current, { x: -2, duration: 0.08, ease: "power1.inOut" })
+      .to(resumeBtnRef.current, { x: 2, duration: 0.08, ease: "power1.inOut" })
+      .to(resumeBtnRef.current, { x: 0, scale: 1.015, duration: 0.18, ease: "power2.out" })
       .to(resumeBtnRef.current, { scale: 1, duration: 0.2, ease: "power2.out" });
 
     gsap.to(resumeBtnRef.current, {
@@ -121,7 +119,7 @@ export default function Navbar() {
 
     ctaStateRef.current = "happy";
     setCtaState("happy");
-    setCtaText("Yay! You clicked me");
+    setCtaText("Opening technical resume");
 
     const tl = gsap.timeline();
 
@@ -247,11 +245,11 @@ export default function Navbar() {
     ctaState === "idle"
       ? "Resume"
       : ctaState === "waiting"
-        ? "Click me"
+        ? "Resume"
         : ctaState === "angry"
-          ? "Click me?"
+          ? "Resume"
           : ctaState === "happy"
-            ? "Yay!"
+            ? "Opening"
             : "Opening";
 
   return (
@@ -340,9 +338,9 @@ export default function Navbar() {
                   : ctaState === "waiting"
                     ? "rounded-full border-black/10 bg-white/90 text-black"
                     : ctaState === "angry"
-                      ? "rounded-[22px] border-[#d8b1a7] bg-[#f3d1c8] text-black"
+                      ? "rounded-[22px] border-foreground/12 bg-surface text-foreground"
                       : ctaState === "happy"
-                        ? "rounded-full border-[#b5d8b1] bg-[#d1f3c8] text-black"
+                        ? "rounded-full border-foreground/12 bg-surface text-foreground"
                         : "rounded-full border-black/10 bg-white/90 text-black"
               }`}
             >

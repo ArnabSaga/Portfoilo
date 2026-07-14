@@ -3,9 +3,16 @@
 import { gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
+import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 
-const inquiryTypes = ["Booking", "General", "Wedding", "Corporate", "Others"];
+const inquiryTypes = [
+  "SaaS Platform",
+  "Creative Frontend",
+  "Full-Stack MVP",
+  "Architecture Review",
+  "General Inquiry",
+];
 
 export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -14,17 +21,38 @@ export default function Contact() {
   const rightRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const [selectedType, setSelectedType] = useState("General");
-  const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [selectedType, setSelectedType] = useState(inquiryTypes[0]);
+  const [formStatus, setFormStatus] = useState<"idle" | "opening">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormStatus("submitting");
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const firstName = formData.get("firstName")?.toString().trim() ?? "";
+    const lastName = formData.get("lastName")?.toString().trim() ?? "";
+    const country = formData.get("country")?.toString().trim() ?? "";
+    const phone = formData.get("phone")?.toString().trim() ?? "";
+    const email = formData.get("email")?.toString().trim() ?? "";
+    const message = formData.get("message")?.toString().trim() ?? "";
+    const name = [firstName, lastName].filter(Boolean).join(" ");
 
-    setTimeout(() => {
-      setFormStatus("success");
-      setTimeout(() => setFormStatus("idle"), 2500);
-    }, 1400);
+    const body = [
+      `Name: ${name || "Not provided"}`,
+      `Email: ${email || "Not provided"}`,
+      `Country: ${country || "Not provided"}`,
+      `Phone: ${phone || "Not provided"}`,
+      `Inquiry type: ${selectedType}`,
+      "",
+      message,
+    ].join("\n");
+
+    setFormStatus("opening");
+
+    window.location.href = `mailto:aranabdey15091@gmail.com?subject=${encodeURIComponent(
+      `${selectedType} inquiry from ${name || "portfolio visitor"}`
+    )}&body=${encodeURIComponent(body)}`;
+
+    window.setTimeout(() => setFormStatus("idle"), 1200);
   };
 
   useGSAP(
@@ -42,78 +70,77 @@ export default function Contact() {
       const mm = gsap.matchMedia();
 
       mm.add("(min-width: 1025px)", () => {
-        gsap.set(".contact-kicker", { y: 18, opacity: 0 });
-        gsap.set(".contact-title-line", { yPercent: 110, opacity: 0 });
-        gsap.set(".contact-copy", { y: 24, opacity: 0 });
-        gsap.set(".contact-info-card", { y: 28, opacity: 0 });
-        gsap.set(".contact-form-reveal", { y: 24, opacity: 0 });
-        gsap.set(cardRef.current, { y: 34, opacity: 0, scale: 0.985 });
-
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 75%",
-            toggleActions: "play none none reverse",
+            toggleActions: "play none none none",
           },
         });
 
-        tl.to(".contact-kicker", {
-          y: 0,
-          opacity: 1,
+        tl.from(".contact-kicker", {
+          y: 18,
+          opacity: 0,
           duration: 0.55,
           ease: "power3.out",
+          immediateRender: false,
         })
-          .to(
+          .from(
             ".contact-title-line",
             {
-              yPercent: 0,
-              opacity: 1,
+              yPercent: 110,
+              opacity: 0,
               duration: 0.9,
               stagger: 0.08,
               ease: "power4.out",
+              immediateRender: false,
             },
             "-=0.25"
           )
-          .to(
+          .from(
             ".contact-copy",
             {
-              y: 0,
-              opacity: 1,
+              y: 24,
+              opacity: 0,
               duration: 0.75,
               ease: "power3.out",
+              immediateRender: false,
             },
             "-=0.45"
           )
-          .to(
+          .from(
             ".contact-info-card",
             {
-              y: 0,
-              opacity: 1,
+              y: 28,
+              opacity: 0,
               duration: 0.75,
               stagger: 0.08,
               ease: "power3.out",
+              immediateRender: false,
             },
             "-=0.3"
           )
-          .to(
+          .from(
             cardRef.current,
             {
-              y: 0,
-              opacity: 1,
-              scale: 1,
+              y: 34,
+              opacity: 0,
+              scale: 0.985,
               duration: 0.95,
               ease: "power4.out",
+              immediateRender: false,
             },
             "-=0.65"
           )
-          .to(
+          .from(
             ".contact-form-reveal",
             {
-              y: 0,
-              opacity: 1,
+              y: 24,
+              opacity: 0,
               duration: 0.65,
               stagger: 0.05,
               ease: "power3.out",
+              immediateRender: false,
             },
             "-=0.55"
           );
@@ -159,6 +186,7 @@ export default function Contact() {
           stagger: 0.08,
           duration: 0.8,
           ease: "power3.out",
+          immediateRender: false,
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 85%",
@@ -329,12 +357,14 @@ export default function Contact() {
                     <input
                       required
                       name="firstName"
+                      aria-label="First name"
                       className="contact-form-reveal h-13 rounded-full border border-black/12 bg-white/55 px-5 font-inter text-sm text-black outline-none placeholder:text-black/32 transition-all duration-300 focus:border-black/25 focus:bg-white sm:h-14"
                       placeholder="First Name"
                     />
                     <input
                       required
                       name="lastName"
+                      aria-label="Last name"
                       className="contact-form-reveal h-13 rounded-full border border-black/12 bg-white/55 px-5 font-inter text-sm text-black outline-none placeholder:text-black/32 transition-all duration-300 focus:border-black/25 focus:bg-white sm:h-14"
                       placeholder="Last Name"
                     />
@@ -343,11 +373,13 @@ export default function Contact() {
                   <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
                     <input
                       name="country"
+                      aria-label="Country"
                       className="contact-form-reveal h-13 rounded-full border border-black/12 bg-white/55 px-5 font-inter text-sm text-black outline-none placeholder:text-black/32 transition-all duration-300 focus:border-black/25 focus:bg-white sm:h-14"
                       placeholder="Country"
                     />
                     <input
                       name="phone"
+                      aria-label="Phone number"
                       className="contact-form-reveal h-13 rounded-full border border-black/12 bg-white/55 px-5 font-inter text-sm text-black outline-none placeholder:text-black/32 transition-all duration-300 focus:border-black/25 focus:bg-white sm:h-14"
                       placeholder="Phone Number"
                     />
@@ -357,6 +389,7 @@ export default function Contact() {
                     required
                     type="email"
                     name="email"
+                    aria-label="Email address"
                     className="contact-form-reveal h-13 w-full rounded-full border border-black/12 bg-white/55 px-5 font-inter text-sm text-black outline-none placeholder:text-black/32 transition-all duration-300 focus:border-black/25 focus:bg-white sm:h-14"
                     placeholder="Email Address"
                   />
@@ -392,6 +425,7 @@ export default function Contact() {
                     required
                     name="message"
                     rows={5}
+                    aria-label="Message"
                     className="contact-form-reveal w-full rounded-[20px] border border-black/12 bg-white/55 px-5 py-4 font-inter text-sm text-black outline-none placeholder:text-black/32 transition-all duration-300 focus:border-black/25 focus:bg-white resize-none sm:rounded-[24px]"
                     placeholder="Message"
                   />
@@ -402,23 +436,21 @@ export default function Contact() {
                       className="mt-0.5 h-4 w-4 rounded border-black/20 cursor-pointer"
                     />
                     <span className="transition-colors group-hover:text-black">
-                      I’d like to receive exclusive offers and updates
+                      I understand this opens my email app and does not send automatically
                     </span>
                   </label>
 
                   <div className="contact-form-reveal pt-1 sm:pt-2">
                     <button
                       type="submit"
-                      disabled={formStatus === "submitting" || formStatus === "success"}
+                      disabled={formStatus === "opening"}
                       className={`group flex h-14 w-full items-center justify-center rounded-full border border-black/14 font-syne text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_14px_30px_rgba(0,0,0,0.12)] active:scale-[0.99] sm:h-16 sm:text-sm ${
-                        formStatus === "success" ? "bg-black text-white" : "bg-white text-black"
+                        "bg-white text-black"
                       }`}
                     >
                       <span className="mr-2">
-                        {formStatus === "idle" && "Submit"}
-                        {formStatus === "submitting" && "Sending..."}
-                        {formStatus === "success" && "Sent Successfully!"}
-                        {formStatus === "error" && "Try Again"}
+                        {formStatus === "idle" && "Open Email Draft"}
+                        {formStatus === "opening" && "Opening Email..."}
                       </span>
                       {formStatus === "idle" && (
                         <span className="transition-transform duration-500 group-hover:translate-x-1">

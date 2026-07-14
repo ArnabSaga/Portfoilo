@@ -55,19 +55,18 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
           cardRef.current,
           {
             y: -10,
-            scale: 1.015,
+            scale: 1.01,
             duration: 0.55,
             ease: EASE_STANDARD,
-            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            borderColor: "rgba(255,255,255,0.18)",
+            borderColor: "var(--color-inverse-faint)",
           },
           0
         )
           .to(
             imageWrapRef.current,
             {
-              scale: 1.06,
-              opacity: 0.9,
+              scale: 1.035,
+              opacity: 0.96,
               duration: 0.65,
               ease: EASE_STANDARD,
             },
@@ -97,8 +96,8 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
             {
               rotate: 90,
               scale: 1.08,
-              backgroundColor: "#fff",
-              color: "#000",
+              backgroundColor: "var(--color-inverse)",
+              color: "var(--color-section-dark)",
               borderColor: "transparent",
               duration: 0.45,
               ease: EASE_STANDARD,
@@ -134,7 +133,7 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
     <article
       ref={cardRef}
       tabIndex={0}
-      className="stack-card group relative flex h-[340px] w-full max-w-full shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.25)] outline-none backdrop-blur-2xl will-change-transform sm:h-[380px] md:h-[420px] lg:h-[440px] lg:w-[340px] lg:max-w-none xl:h-[470px] xl:w-[360px] 2xl:h-[520px] 2xl:w-[400px]"
+      className="stack-card group relative flex h-[320px] w-full max-w-full shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-inverse-faint bg-glass-dark shadow-(--shadow-stack-card) outline-none backdrop-blur-2xl will-change-transform focus-visible:border-inverse-muted focus-visible:ring-2 focus-visible:ring-inverse-faint sm:h-[360px] md:h-[400px] lg:h-[430px] lg:w-[380px] lg:max-w-none xl:h-[450px] xl:w-[400px] 2xl:h-[500px] 2xl:w-[430px]"
     >
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div ref={imageWrapRef} className="relative h-full w-full">
@@ -142,25 +141,25 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
             src={item.image}
             alt={item.name}
             fill
-            className="object-cover opacity-30 transition-opacity duration-500 group-hover:opacity-55"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 340px, (max-width: 1536px) 360px, 400px"
-            unoptimized={item.image.startsWith("http")}
-            priority={index < 8}
+            className="object-cover opacity-40 transition-opacity duration-500 group-hover:opacity-60"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 380px, (max-width: 1536px) 400px, 430px"
+            unoptimized={item.image.startsWith('http')}
+            loading="lazy"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,6,6,0.96)_0%,rgba(6,6,6,0.58)_45%,rgba(6,6,6,0.92)_100%)]" />
+        <div className="absolute inset-0 bg-(--stack-card-overlay)" />
       </div>
 
       <div className="relative z-10 flex items-start justify-between gap-4 p-5 sm:p-6 lg:p-7 2xl:p-10">
-        <span className="font-inter text-[8px] font-semibold uppercase tracking-[0.28em] text-white/52 sm:text-[9px] lg:text-[10px]">
-          {String(index + 1).padStart(2, "0")} — {item.category}
+        <span className="max-w-[78%] font-inter text-[8px] font-semibold uppercase tracking-[0.24em] text-inverse-muted sm:text-[9px] lg:text-[10px]">
+          {String(index + 1).padStart(2, '0')} — {item.category}
         </span>
 
         <div
           ref={plusRef}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 transition-colors sm:h-9 sm:w-9"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-inverse-faint transition-colors sm:h-9 sm:w-9"
         >
-          <span className="font-inter text-[12px] font-light leading-none text-white/70 group-hover:text-black sm:text-[14px]">
+          <span className="font-inter text-[12px] font-light leading-none text-inverse-muted group-hover:text-section-dark sm:text-[14px]">
             +
           </span>
         </div>
@@ -169,14 +168,14 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
       <div className="relative z-10 px-5 pb-8 pt-6 sm:px-6 sm:pb-10 lg:px-7 lg:pb-12 xl:px-8 2xl:px-10 2xl:pb-16">
         <h3
           ref={titleRef}
-          className="font-syne text-[1.9rem] font-extrabold uppercase leading-[0.92] tracking-[-0.045em] text-white sm:text-[2.1rem] md:text-[2.25rem] lg:text-[2.35rem] xl:text-[2.55rem] 2xl:text-[2.85rem]"
+          className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-syne text-[clamp(1.35rem,6vw,1.75rem)] font-extrabold uppercase leading-[0.96] text-inverse sm:text-[1.65rem] md:text-[1.8rem] lg:text-[1.58rem] xl:text-[1.72rem] 2xl:text-[1.95rem]"
         >
           {item.name}
         </h3>
 
         <div ref={metaRef} className="mt-4 flex translate-y-3 items-center gap-3 opacity-0 xl:mt-5">
-          <div className="h-px w-6 bg-white/30 xl:w-8" />
-          <span className="font-inter text-[8px] font-semibold uppercase tracking-[0.28em] text-white/50 sm:text-[9px]">
+          <div className="h-px w-6 bg-inverse-faint xl:w-8" />
+          <span className="font-inter text-[8px] font-semibold uppercase tracking-[0.24em] text-inverse-muted sm:text-[9px]">
             Highly Proficient
           </span>
         </div>
@@ -205,8 +204,8 @@ export default function TechStack() {
           Math.max(0, track.scrollWidth - window.innerWidth + window.innerWidth * 0.08);
 
         gsap.set(cards, {
-          opacity: 0.28,
-          scale: 0.9,
+          opacity: 0.58,
+          scale: 0.94,
         });
 
         gsap.from(introRef.current, {
@@ -251,8 +250,8 @@ export default function TechStack() {
           });
 
           gsap.to(card, {
-            opacity: 0.28,
-            scale: 0.9,
+            opacity: 0.5,
+            scale: 0.95,
             ease: EASE_STANDARD,
             duration: 0.45,
             scrollTrigger: {
@@ -268,8 +267,7 @@ export default function TechStack() {
 
       mm.add("(max-width: 1023px)", () => {
         gsap.from(".stack-card", {
-          opacity: 0,
-          y: 42,
+          y: 28,
           stagger: 0.08,
           duration: DURATION_BASE + 0.1,
           ease: EASE_STANDARD,
@@ -290,10 +288,10 @@ export default function TechStack() {
     <section
       id="stack"
       ref={sectionRef}
-      className="relative flex min-h-screen w-full flex-col justify-center overflow-hidden bg-[#060606] px-4 py-20 text-white sm:px-5 md:px-8 md:py-24 xl:py-28"
+      className="relative flex min-h-screen w-full flex-col justify-center overflow-hidden bg-section-dark px-4 py-20 text-inverse sm:px-5 md:px-8 md:py-24 xl:py-28"
     >
-      <div className="pointer-events-none absolute left-[10%] top-[14%] h-[240px] w-[240px] rounded-full bg-cyan-500/5 blur-[90px] sm:h-[320px] sm:w-[320px] xl:h-[500px] xl:w-[500px] xl:blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-[8%] right-[10%] h-[280px] w-[280px] rounded-full bg-amber-500/5 blur-[90px] sm:h-[360px] sm:w-[360px] xl:h-[600px] xl:w-[600px] xl:blur-[120px]" />
+      <div className="pointer-events-none absolute left-[10%] top-[14%] h-[240px] w-[240px] rounded-full bg-accent-cool blur-[90px] sm:h-[320px] sm:w-[320px] xl:h-[500px] xl:w-[500px] xl:blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-[8%] right-[10%] h-[280px] w-[280px] rounded-full bg-accent-warm blur-[90px] sm:h-[360px] sm:w-[360px] xl:h-[600px] xl:w-[600px] xl:blur-[120px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-[1800px]">
         <div
@@ -301,23 +299,23 @@ export default function TechStack() {
           className="mb-10 grid grid-cols-1 items-end gap-5 sm:mb-12 lg:mb-16 lg:grid-cols-[1.2fr_0.5fr_0.8fr] 2xl:mb-24"
         >
           <div>
-            <h2 className="font-syne text-[clamp(3.2rem,10vw,10.5rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.08em] text-[#f8f7f4]">
+            <h2 className="font-syne text-[clamp(3.2rem,10vw,10.5rem)] font-extrabold uppercase leading-[0.84] text-inverse">
               Core
               <br />
               Stack
             </h2>
           </div>
 
-          <div className="hidden h-px w-full bg-white/10 lg:block" />
+          <div className="hidden h-px w-full bg-inverse-faint lg:block" />
 
-          <p className="pb-1 text-left font-inter text-[8px] font-semibold uppercase tracking-[0.42em] text-white/40 sm:text-[9px] lg:pb-4 lg:text-right lg:text-[10px]">
+          <p className="pb-1 text-left font-inter text-[8px] font-semibold uppercase tracking-[0.34em] text-inverse-muted sm:text-[9px] lg:pb-4 lg:text-right lg:text-[10px]">
             [ Technical expertise ]
           </p>
         </div>
 
         <div
           ref={trackRef}
-          className="flex w-full flex-col gap-4 py-2 sm:gap-5 lg:w-max lg:flex-row lg:items-center lg:gap-8 lg:pl-[18vw] lg:pr-[10vw] xl:gap-9 2xl:gap-10"
+          className="flex w-full flex-col gap-4 py-2 sm:gap-5 lg:w-max lg:flex-row lg:items-center lg:gap-7 lg:pl-[18vw] lg:pr-[10vw] xl:gap-8 2xl:gap-9"
         >
           {stack.map((item, index) => (
             <StackCard key={item.name} item={item} index={index} />
