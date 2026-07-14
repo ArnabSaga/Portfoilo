@@ -5,9 +5,9 @@ import { useGSAP } from "@gsap/react";
 import { useCallback, useRef } from "react";
 
 const rotatingTaglines = [
-  "Crafting high-end digital experiences",
+  "High-end digital systems",
   "With architectural precision",
-  "Building scalable web architectures",
+  "Scalable full-stack architecture",
 ];
 
 export default function Hero() {
@@ -247,7 +247,7 @@ export default function Hero() {
                 {line.map((word, wordIndex) => (
                   <span
                     key={`${lineIndex}-${wordIndex}`}
-                    className="hero-title-word whitespace-nowrap font-syne text-[clamp(3rem,13vw,11rem)] font-extrabold uppercase leading-[0.82] tracking-[-0.08em] text-foreground"
+                    className="hero-title-word whitespace-nowrap font-syne text-[clamp(3rem,11vw,9.8rem)] font-extrabold uppercase leading-[0.82] tracking-[-0.07em] text-foreground"
                   >
                     {word}
                   </span>
@@ -257,17 +257,17 @@ export default function Hero() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-10 sm:mt-14 md:mt-16 md:gap-12 lg:mt-20 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mt-9 flex flex-col gap-8 sm:mt-10 md:mt-12 md:gap-10 lg:mt-14 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-[760px]">
             <div className="hero-meta text-[clamp(1.35rem,4.8vw,3.4rem)] font-inter font-medium uppercase leading-[1.04] tracking-[-0.04em] text-foreground">
               Creative Web Developer
             </div>
 
-            <div className="hero-meta relative mt-3 h-[2.5em] overflow-hidden text-[clamp(1.05rem,3.6vw,2.8rem)] font-inter font-normal leading-[1.08] tracking-[-0.03em] text-foreground/42 sm:mt-4 sm:h-[1.35em]">
+            <div className="hero-meta relative mt-3 min-h-[2.65em] overflow-hidden text-[clamp(1rem,3.1vw,2.35rem)] font-inter font-normal leading-[1.18] tracking-[-0.02em] text-foreground/42 sm:mt-4 sm:min-h-[1.45em] lg:min-h-[2.75em] xl:min-h-[1.45em]">
               {rotatingTaglines.map((phrase, index) => (
                 <div
                   key={index}
-                  className="tagline-item absolute left-0 top-0 flex max-w-[18ch] flex-wrap gap-x-2 sm:max-w-none"
+                  className="tagline-item absolute left-0 top-0 flex max-w-[22ch] flex-wrap gap-x-2 sm:max-w-[34rem] xl:max-w-none"
                 >
                   {phrase.split(" ").map((word, wordIndex) => (
                     <span key={wordIndex} className="tagline-word inline-block whitespace-nowrap">

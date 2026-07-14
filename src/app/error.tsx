@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function Error({
@@ -35,7 +36,7 @@ export default function Error({
                 <div className="absolute inset-x-0 bottom-0 h-0 bg-background transition-all duration-500 ease-[0.76, 0, 0.24, 1] group-hover:h-full"></div>
             </button>
             
-            <a
+            <Link
                 href="/"
                 className="group relative px-12 py-5 border border-border-custom overflow-hidden transition-colors hover:border-foreground"
             >
@@ -46,7 +47,7 @@ export default function Error({
                 <span className="absolute inset-0 z-20 flex items-center justify-center font-inter text-[10px] font-extrabold uppercase tracking-[0.5em] text-background opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     Emergency Exit
                 </span>
-            </a>
+            </Link>
         </div>
       </div>
       

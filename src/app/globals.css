@@ -8,11 +8,25 @@
   --color-surface: #FFFFFF;
   --color-foreground: #111111;
   --color-border-custom: #E4E4E7;
+  --color-section-dark: #060606;
+  --color-inverse: #F8F7F4;
+  --color-inverse-muted: rgba(248, 247, 244, 0.58);
+  --color-inverse-faint: rgba(248, 247, 244, 0.12);
+  --color-glass-dark: rgba(255, 255, 255, 0.055);
+  --color-accent-cool: rgba(34, 211, 238, 0.08);
+  --color-accent-warm: rgba(245, 158, 11, 0.08);
 }
 
 :root {
   --background: #F9F9F9;
   --foreground: #111111;
+  --shadow-stack-card: 0 16px 44px rgba(0, 0, 0, 0.28);
+  --stack-card-overlay: linear-gradient(
+    180deg,
+    var(--color-section-dark) 0%,
+    rgba(6, 6, 6, 0.42) 46%,
+    rgba(6, 6, 6, 0.88) 100%
+  );
 }
 
 body {
