@@ -219,10 +219,7 @@ export default function Contact() {
     >
       <div className="mx-auto max-w-[1800px]">
         <div className="relative overflow-hidden rounded-[26px] border border-black/10 bg-[#d9dde7] sm:rounded-[28px] lg:rounded-[32px]">
-          <div
-            ref={bgRef}
-            className="absolute inset-0 bg-[url('/contact/contact-bg.jpg')] bg-cover bg-center opacity-90"
-          />
+          <div ref={bgRef} className="absolute inset-0 bg-surface opacity-90" />
 
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(22,28,38,0.72)_0%,rgba(28,35,48,0.56)_28%,rgba(255,255,255,0.14)_68%,rgba(255,255,255,0.2)_100%)] xl:bg-[linear-gradient(90deg,rgba(28,34,48,0.68)_0%,rgba(36,43,60,0.48)_28%,rgba(255,255,255,0.12)_58%,rgba(255,255,255,0.18)_100%)]" />
 

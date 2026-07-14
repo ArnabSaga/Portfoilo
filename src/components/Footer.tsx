@@ -26,7 +26,6 @@ export default function Footer() {
 
   const xTo = useRef<((v: number) => void) | null>(null);
   const yTo = useRef<((v: number) => void) | null>(null);
-  const scaleTo = useRef<((v: number) => void) | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -78,10 +77,6 @@ export default function Footer() {
           ease: "power3.out",
         });
 
-        scaleTo.current = gsap.quickTo(brandRef.current, "scale", {
-          duration: 0.8,
-          ease: "power3.out",
-        });
       });
 
       return () => mm.revert();
@@ -94,7 +89,7 @@ export default function Footer() {
     if (window.innerWidth < 1024) return;
 
     const brand = brandRef.current;
-    if (!brand || !xTo.current || !yTo.current || !scaleTo.current) return;
+    if (!brand || !xTo.current || !yTo.current) return;
 
     const rect = brand.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -107,18 +102,15 @@ export default function Footer() {
     if (distance < 520) {
       xTo.current(distanceX * 0.22);
       yTo.current(distanceY * 0.22);
-      scaleTo.current(1.06);
     } else {
       xTo.current(0);
       yTo.current(0);
-      scaleTo.current(1);
     }
   }, []);
 
   const handlePointerLeave = useCallback(() => {
     xTo.current?.(0);
     yTo.current?.(0);
-    scaleTo.current?.(1);
   }, []);
 
   const currentYear = new Date().getFullYear();
