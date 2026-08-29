@@ -1,381 +1,208 @@
 "use client";
 
-import { gsap } from "@/lib/gsap";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { Flip, gsap, motion } from "@/lib/gsap";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-
-type CtaState = "idle" | "waiting" | "angry" | "happy" | "clicked";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const navLinks = [
-  { href: "#hero", label: "Home" },
-  { href: "#work", label: "Work" },
-  { href: "#stack", label: "Stack" },
-  { href: "#experience", label: "Experience" },
-  { href: "#contact", label: "Contact" },
-];
+  { href: "#work", label: "Work", number: "01" },
+  { href: "#stack", label: "Stack", number: "02" },
+  { href: "#experience", label: "Journey", number: "03" },
+  { href: "#contact", label: "Contact", number: "04" },
+] as const;
+
+type SectionId = (typeof navLinks)[number]["href"] | null;
+
+const RESUME_URL =
+  "https://drive.google.com/file/d/1DXPHzJPxcWU0pD_o8vN6IqQBXL-lVzt3/view?usp=sharing";
 
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
-  const desktopMenuRef = useRef<HTMLDivElement>(null);
-  const resumeWrapRef = useRef<HTMLDivElement>(null);
-  const resumeBtnRef = useRef<HTMLButtonElement>(null);
-  const mobilePanelRef = useRef<HTMLDivElement>(null);
-  const mobileMenuBtnRef = useRef<HTMLButtonElement>(null);
-
-  const danceTweenRef = useRef<gsap.core.Tween | null>(null);
-  const pulseTweenRef = useRef<gsap.core.Tween | null>(null);
-  const angerTweenRef = useRef<gsap.core.Timeline | null>(null);
-
-  const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const angryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const happyDanceTweenRef = useRef<gsap.core.Tween | null>(null);
-
-  const ctaStateRef = useRef<CtaState>("idle");
-
-  const [ctaState, setCtaState] = useState<CtaState>("idle");
-  const [ctaText, setCtaText] = useState("Resume");
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const capsuleRef = useRef<HTMLSpanElement>(null);
+  const lastScrollY = useRef(0);
+  const [activeSection, setActiveSection] = useState<SectionId>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const reducedMotion = useReducedMotion();
 
-  const stopCtaAnimations = useCallback(() => {
-    danceTweenRef.current?.kill();
-    pulseTweenRef.current?.kill();
-    angerTweenRef.current?.kill();
-    happyDanceTweenRef.current?.kill();
+  const measureSections = useCallback(() => {
+    const anchor = window.scrollY + window.innerHeight * 0.42;
+    let current: SectionId = null;
+
+    const sections = navLinks
+      .map((item) => ({ item, section: document.querySelector<HTMLElement>(item.href) }))
+      .filter((entry): entry is { item: (typeof navLinks)[number]; section: HTMLElement } => Boolean(entry.section))
+      .sort((a, b) => a.section.offsetTop - b.section.offsetTop);
+
+    for (const { item, section } of sections) {
+      if (section.offsetTop <= anchor) current = item.href;
+    }
+
+    setActiveSection(current);
   }, []);
 
-  const triggerWaitingState = useCallback(() => {
-    if (!resumeBtnRef.current || ctaStateRef.current === "clicked") return;
-    if (window.innerWidth < 768) return;
-
-    ctaStateRef.current = "waiting";
-    setCtaState("waiting");
-    setCtaText("View technical resume");
-
-    stopCtaAnimations();
-
-    gsap.to(resumeBtnRef.current, {
-      paddingLeft: 28,
-      paddingRight: 28,
-      borderRadius: 999,
-      duration: 0.45,
-      ease: "power3.out",
-    });
-
-    pulseTweenRef.current = gsap.to(resumeBtnRef.current, {
-      boxShadow: "0 0 0 10px rgba(0,0,0,0)",
-      repeat: -1,
-      duration: 1.8,
-      ease: "power2.out",
-    });
-
-    danceTweenRef.current = gsap.to(resumeBtnRef.current, {
-      keyframes: [
-        { rotation: -2, y: -2, duration: 0.18 },
-        { rotation: 2, y: 0, duration: 0.18 },
-        { rotation: -1.5, y: -1, duration: 0.16 },
-        { rotation: 0, y: 0, duration: 0.16 },
-      ],
-      repeat: -1,
-      repeatDelay: 1.1,
-      ease: "power1.inOut",
-    });
-  }, [stopCtaAnimations]);
-
-  const triggerAngryState = useCallback(() => {
-    if (!resumeBtnRef.current || ctaStateRef.current === "clicked") return;
-    if (window.innerWidth < 768) return;
-
-    ctaStateRef.current = "angry";
-    setCtaState("angry");
-    setCtaText("See system case notes");
-
-    stopCtaAnimations();
-
-    angerTweenRef.current = gsap.timeline({ repeat: -1, repeatDelay: 2.4 });
-
-    angerTweenRef.current
-      .to(resumeBtnRef.current, { x: -2, duration: 0.08, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 2, duration: 0.08, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 0, scale: 1.015, duration: 0.18, ease: "power2.out" })
-      .to(resumeBtnRef.current, { scale: 1, duration: 0.2, ease: "power2.out" });
-
-    gsap.to(resumeBtnRef.current, {
-      borderRadius: 22,
-      duration: 0.35,
-      ease: "power3.out",
-    });
-  }, [stopCtaAnimations]);
-
-  const handleResumeClick = useCallback(() => {
-    if (!resumeBtnRef.current) return;
-
-    if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
-    if (angryTimerRef.current) clearTimeout(angryTimerRef.current);
-
-    stopCtaAnimations();
-
-    ctaStateRef.current = "happy";
-    setCtaState("happy");
-    setCtaText("Opening technical resume");
-
-    const tl = gsap.timeline();
-
-    tl.to(resumeBtnRef.current, {
-      y: -12,
-      scale: 1.05,
-      rotation: 5,
-      duration: 0.15,
-      ease: "power2.out",
-    })
-      .to(resumeBtnRef.current, {
-        y: 0,
-        scale: 1,
-        rotation: -5,
-        duration: 0.12,
-        ease: "bounce.out",
-      })
-      .to(resumeBtnRef.current, {
-        rotation: 0,
-        duration: 0.1,
-        onComplete: () => {
-          if (!resumeBtnRef.current) return;
-          // Start slow dancing
-          happyDanceTweenRef.current = gsap.to(resumeBtnRef.current, {
-            rotation: 3,
-            duration: 2.2,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut",
-          });
-        },
-      });
-
-    // Small delay before opening to let the animation play
-    setTimeout(() => {
-      window.open(
-        "https://drive.google.com/file/d/1DXPHzJPxcWU0pD_o8vN6IqQBXL-lVzt3/view?usp=sharing",
-        "_blank"
-      );
-    }, 200);
-  }, [stopCtaAnimations]);
-
   useEffect(() => {
-    if (
-      !navRef.current ||
-      !logoRef.current ||
-      !desktopMenuRef.current ||
-      !resumeWrapRef.current ||
-      !resumeBtnRef.current
-    ) {
-      return;
-    }
-
-    const ctx = gsap.context(() => {
-      gsap.set([logoRef.current, desktopMenuRef.current, resumeWrapRef.current], {
-        y: -20,
-        opacity: 0,
+    let frame = 0;
+    const update = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        setCompact(currentY > 96 && currentY > lastScrollY.current);
+        lastScrollY.current = currentY;
+        measureSections();
       });
-
-      gsap.to([logoRef.current, desktopMenuRef.current, resumeWrapRef.current], {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.08,
-        ease: "power3.out",
-        delay: 0.1,
-      });
-    }, navRef);
-
-    waitTimerRef.current = setTimeout(() => {
-      triggerWaitingState();
-    }, 10000);
-
-    angryTimerRef.current = setTimeout(() => {
-      triggerAngryState();
-    }, 30000);
-
-    return () => {
-      ctx.revert();
-
-      if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
-      if (angryTimerRef.current) clearTimeout(angryTimerRef.current);
-
-      stopCtaAnimations();
     };
-  }, [triggerWaitingState, triggerAngryState, stopCtaAnimations]);
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    window.addEventListener("hashchange", update);
+    window.addEventListener("popstate", update);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("hashchange", update);
+      window.removeEventListener("popstate", update);
+    };
+  }, [measureSections]);
+
+  useLayoutEffect(() => {
+    const capsule = capsuleRef.current;
+    if (!capsule || !activeSection) return;
+    const target = document.querySelector<HTMLElement>(`[data-nav-link="${activeSection}"]`);
+    if (!target) return;
+
+    gsap.set(capsule, { display: "block" });
+    Flip.fit(capsule, target, {
+      duration: reducedMotion ? 0 : motion.duration.interface,
+      ease: motion.ease.interface,
+    });
+  }, [activeSection, reducedMotion]);
 
   useEffect(() => {
-    if (!mobilePanelRef.current) return;
+    if (!menuOpen) return;
+    const firstLink = menuPanelRef.current?.querySelector<HTMLAnchorElement>("a");
+    firstLink?.focus();
 
-    if (menuOpen) {
-      gsap.set(mobilePanelRef.current, { display: "block" });
-      gsap.fromTo(
-        mobilePanelRef.current,
-        { opacity: 0, y: -12 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.3,
-          ease: "power3.out",
-        }
-      );
-    } else {
-      gsap.to(mobilePanelRef.current, {
-        opacity: 0,
-        y: -10,
-        duration: 0.24,
-        ease: "power2.out",
-        onComplete: () => {
-          if (mobilePanelRef.current) {
-            gsap.set(mobilePanelRef.current, { display: "none" });
-          }
-        },
-      });
-    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
   }, [menuOpen]);
 
-  const handleMobileLinkClick = () => {
-    setMenuOpen(false);
-  };
-
-  const ctaLabel =
-    ctaState === "idle"
-      ? "Resume"
-      : ctaState === "waiting"
-        ? "Resume"
-        : ctaState === "angry"
-          ? "Resume"
-          : ctaState === "happy"
-            ? "Opening"
-            : "Opening";
+  useEffect(() => {
+    if (!navRef.current || reducedMotion) return;
+    const context = gsap.context(() => {
+      gsap.from("[data-nav-piece]", {
+        y: -18,
+        opacity: 0,
+        stagger: motion.stagger.item,
+        duration: motion.duration.interface,
+        ease: motion.ease.interface,
+      });
+    }, navRef);
+    return () => context.revert();
+  }, [reducedMotion]);
 
   return (
     <nav
       ref={navRef}
-      className="pointer-events-none fixed left-0 top-0 z-50 w-full px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-5"
+      aria-label="Primary navigation"
+      data-compact={compact}
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 px-3 py-3 sm:px-5 md:px-7"
     >
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
-        {/* Logo */}
-        <div ref={logoRef} className="pointer-events-auto shrink-0">
-          <Link
-            href="#hero"
-            className="group relative flex items-center justify-center rounded-2xl border border-black/10 bg-white/72 px-2 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-500 hover:border-black/15 hover:bg-white/84 sm:px-2.5 sm:py-2.5"
-          >
-            <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0.18))]" />
-            <Image
-              src="/logo/logo.jpg"
-              alt="AAD Logo"
-              width={44}
-              height={44}
-              className="relative z-10 object-contain h-7 w-auto sm:h-9 sm:w-auto"
-            />
-          </Link>
-        </div>
-
-        {/* Desktop menu */}
-        <div
-          ref={desktopMenuRef}
-          className="pointer-events-auto relative hidden items-center rounded-full border border-black/10 bg-white/72 px-6 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl md:flex lg:px-7"
+      <div className="flex items-start justify-between gap-3 transition-transform duration-500 data-[compact=true]:scale-[0.94]" data-compact={compact}>
+        <Link
+          data-nav-piece
+          href="#hero"
+          aria-label="Return to introduction"
+          className="pointer-events-auto relative flex min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-2xl border border-foreground/10 bg-surface/80 p-2 shadow-[var(--shadow-floating)] backdrop-blur-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
         >
-          <div className="absolute inset-0 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.2))]" />
-          <div className="relative z-10 flex items-center gap-6 lg:gap-8 xl:gap-10">
-            {navLinks.map((item) => (
+          <Image src="/logo/logo.jpg" alt="AAD" width={44} height={44} className="h-7 w-auto sm:h-9" priority />
+        </Link>
+
+        <div
+          data-nav-piece
+          className="pointer-events-auto relative hidden items-center rounded-full border border-foreground/10 bg-surface/80 p-1.5 shadow-[var(--shadow-floating)] backdrop-blur-xl md:flex"
+        >
+          <span
+            ref={capsuleRef}
+            aria-hidden="true"
+            className={`absolute left-0 top-0 z-0 rounded-full bg-foreground ${activeSection ? "block" : "hidden"}`}
+          />
+          {navLinks.map((item) => {
+            const active = activeSection === item.href;
+            return (
               <Link
                 key={item.href}
+                data-nav-link={item.href}
                 href={item.href}
-                className="group relative font-inter text-[10px] font-semibold uppercase tracking-[0.2em] text-black/58 transition-colors duration-300 hover:text-black"
+                aria-current={active ? "location" : undefined}
+                className={`relative z-10 flex min-h-11 items-center gap-2 rounded-full px-4 font-inter text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground lg:px-5 ${active ? "text-inverse" : "text-foreground/58 hover:text-foreground"}`}
               >
+                <span className="text-[8px] opacity-60">{item.number}</span>
                 {item.label}
-                <span className="absolute -bottom-1 left-1/2 h-px w-0 -translate-x-1/2 bg-black/80 transition-all duration-300 group-hover:w-full" />
               </Link>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Right controls */}
-        <div className="pointer-events-auto flex items-center gap-2 sm:gap-3">
-          {/* Mobile menu button */}
+        <div data-nav-piece className="pointer-events-auto flex items-center gap-2">
           <button
-            ref={mobileMenuBtnRef}
+            ref={menuButtonRef}
             type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-black/10 bg-white/78 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 hover:bg-white/88 md:hidden"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setMenuOpen((value) => !value)}
+            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-foreground/10 bg-surface/80 shadow-[var(--shadow-floating)] backdrop-blur-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:hidden"
           >
-            <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.16))]" />
-            <div className="relative z-10 flex flex-col gap-[4px]">
-              <span
-                className={`h-[1.5px] w-4 bg-black transition-transform duration-300 ${
-                  menuOpen ? "translate-y-[5.5px] rotate-45" : ""
-                }`}
-              />
-              <span
-                className={`h-[1.5px] w-4 bg-black transition-opacity duration-300 ${
-                  menuOpen ? "opacity-0" : "opacity-100"
-                }`}
-              />
-              <span
-                className={`h-[1.5px] w-4 bg-black transition-transform duration-300 ${
-                  menuOpen ? "-translate-y-[5.5px] -rotate-45" : ""
-                }`}
-              />
-            </div>
+            <span aria-hidden="true" className="font-inter text-[9px] font-bold uppercase tracking-[0.2em]">{menuOpen ? "Close" : "Menu"}</span>
           </button>
 
-          {/* Resume CTA */}
-          <div ref={resumeWrapRef}>
-            <button
-              ref={resumeBtnRef}
-              onClick={handleResumeClick}
-              aria-label={ctaText}
-              className={`group relative overflow-hidden border px-4 py-3 font-syne text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-colors duration-300 sm:px-5 sm:py-3.5 sm:tracking-[0.22em] ${
-                ctaState === "idle"
-                  ? "rounded-2xl border-black/10 bg-white/84 text-black"
-                  : ctaState === "waiting"
-                    ? "rounded-full border-black/10 bg-white/90 text-black"
-                    : ctaState === "angry"
-                      ? "rounded-[22px] border-foreground/12 bg-surface text-foreground"
-                      : ctaState === "happy"
-                        ? "rounded-full border-foreground/12 bg-surface text-foreground"
-                        : "rounded-full border-black/10 bg-white/90 text-black"
-              }`}
+          <Magnetic>
+            <a
+              href={RESUME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex min-h-11 items-center gap-2 rounded-2xl border border-foreground/12 bg-foreground px-4 font-syne text-[10px] font-bold uppercase tracking-[0.18em] text-inverse shadow-[var(--shadow-floating)] transition-transform duration-300 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground sm:px-5"
             >
-              <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.12))]" />
-              <span className="relative z-10 flex items-center gap-2">
-                <span className="hidden sm:inline">{ctaText}</span>
-                <span className="sm:hidden">{ctaLabel}</span>
-                {ctaState !== "idle" && <span className="text-[11px] leading-none">→</span>}
-              </span>
-            </button>
-          </div>
+              Resume
+              <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">↗</span>
+            </a>
+          </Magnetic>
         </div>
       </div>
 
-      {/* Mobile dropdown panel */}
-      <div ref={mobilePanelRef} className="pointer-events-auto hidden pt-3 md:hidden">
-        <div className="overflow-hidden rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.1)] backdrop-blur-xl">
-          <div className="mb-3 font-inter text-[9px] font-semibold uppercase tracking-[0.34em] text-black/34">
-            Navigation
-          </div>
-
-          <div className="flex flex-col gap-1">
-            {navLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={handleMobileLinkClick}
-                className="rounded-2xl px-3 py-3 font-syne text-lg font-bold uppercase tracking-[-0.03em] text-black transition-colors duration-300 hover:bg-black/4"
-              >
-                {item.label}
-              </Link>
-            ))}
+      {menuOpen && (
+        <div id="mobile-navigation" ref={menuPanelRef} className="pointer-events-auto pt-3 md:hidden">
+          <div className="rounded-3xl border border-foreground/10 bg-surface/94 p-3 shadow-[var(--shadow-floating)] backdrop-blur-xl">
+            <ul className="space-y-1">
+              {navLinks.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-current={activeSection === item.href ? "location" : undefined}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex min-h-12 items-center justify-between rounded-2xl px-4 font-syne text-lg font-bold uppercase focus-visible:outline-2 focus-visible:outline-foreground"
+                  >
+                    {item.label}<span className="font-inter text-[9px] tracking-[0.2em]">{item.number}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }

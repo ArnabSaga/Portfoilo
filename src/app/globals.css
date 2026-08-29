@@ -21,12 +21,67 @@
   --background: #F9F9F9;
   --foreground: #111111;
   --shadow-stack-card: 0 16px 44px rgba(0, 0, 0, 0.28);
+  --shadow-floating: 0 8px 30px color-mix(in srgb, var(--color-foreground) 9%, transparent);
+  --shadow-media: 0 24px 80px color-mix(in srgb, var(--color-foreground) 18%, transparent);
+  --radius-project: 1.75rem;
+  --project-media-shade: color-mix(in srgb, var(--color-foreground) 45%, transparent);
   --stack-card-overlay: linear-gradient(
     180deg,
     var(--color-section-dark) 0%,
     rgba(6, 6, 6, 0.42) 46%,
     rgba(6, 6, 6, 0.88) 100%
   );
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-foreground) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-foreground) 6%, transparent) 1px, transparent 1px);
+  background-size: clamp(3rem, 7vw, 7rem) clamp(3rem, 7vw, 7rem);
+}
+
+.project-label {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-foreground) 48%, transparent);
+}
+
+.project-value {
+  margin-top: 0.4rem;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.project-action {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.55rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-foreground) 22%, transparent);
+  font-family: var(--font-syne), sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: border-color 0.4s ease, transform 0.4s ease;
+}
+
+.project-action:hover {
+  border-color: var(--color-foreground);
+  transform: translateY(-0.125rem);
+}
+
+.project-action:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 0.25rem;
 }
 
 body {
@@ -64,4 +119,13 @@ html.lenis {
 * {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
