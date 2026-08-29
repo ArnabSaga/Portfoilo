@@ -17,11 +17,7 @@ const stack = [
   { name: "Prisma", category: "Backend", image: "/icon/prisma.webp" },
   { name: "Docker", category: "DevOps", image: "/icon/docker.jpg" },
   { name: "Tailwind CSS", category: "Styles", image: "/icon/tailwind.jpg" },
-  {
-    name: "shadcn/ui",
-    category: "Styles",
-    image: "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/www/public/logo.png",
-  },
+  { name: "shadcn/ui", category: "Styles", image: "icon/shadcn.jpg" },
   { name: "GSAP", category: "Animation", image: "/icon/gsap.jpg" },
   { name: "Three.js", category: "Creative Dev", image: "/icon/three-js.jpg" },
   { name: "Git", category: "DevOps", image: "/icon/git.jpg" },
