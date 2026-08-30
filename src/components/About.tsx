@@ -1,6 +1,7 @@
 "use client";
 
 import { gsap } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 import { useRef } from "react";
@@ -23,6 +24,7 @@ export default function About() {
   const portraitFrameRef = useRef<HTMLDivElement>(null);
   const portraitInnerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
@@ -35,6 +37,7 @@ export default function About() {
       ) {
         return;
       }
+      if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
@@ -187,7 +190,7 @@ export default function About() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   return (

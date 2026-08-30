@@ -1,6 +1,7 @@
 "use client";
 
 import { gsap } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
 
@@ -61,10 +62,12 @@ export default function Experience() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinWrapRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
       if (!sectionRef.current || !pinWrapRef.current || !introRef.current) return;
+      if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
@@ -232,7 +235,7 @@ export default function Experience() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   return (
@@ -264,7 +267,7 @@ export default function Experience() {
         </div>
 
         {/* Desktop premium unfolding version */}
-        <div className="hidden lg:block">
+        <div className={reducedMotion ? "hidden" : "hidden lg:block"}>
           <div className="relative min-h-[82vh] overflow-hidden rounded-[32px] border border-white/10 bg-[#030303] px-8 py-12 xl:min-h-[84vh] xl:px-10 xl:py-14">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.04),transparent_42%)]" />
 
@@ -378,7 +381,7 @@ export default function Experience() {
         </div>
 
         {/* Tablet / Mobile premium editorial fallback */}
-        <div className="lg:hidden">
+        <div className={reducedMotion ? "block" : "lg:hidden"}>
           <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#030303] px-5 py-8 sm:px-6 sm:py-10">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(255,255,255,0.05),transparent_42%)]" />
             <div className="pointer-events-none absolute left-6 top-0 bottom-0 w-px bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04),rgba(255,255,255,0.12))] sm:left-8" />

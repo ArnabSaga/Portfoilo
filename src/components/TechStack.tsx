@@ -1,6 +1,7 @@
 "use client";
 
 import { DURATION_BASE, EASE_STANDARD, gsap } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 import { useRef } from "react";
@@ -29,6 +30,7 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
   const plusRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
@@ -41,6 +43,7 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
       ) {
         return;
       }
+      if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
@@ -122,14 +125,14 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
 
       return () => mm.revert();
     },
-    { scope: cardRef }
+    { scope: cardRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   return (
     <article
       ref={cardRef}
       tabIndex={0}
-      className="stack-card group relative flex h-[320px] w-full max-w-full shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-inverse-faint bg-glass-dark shadow-(--shadow-stack-card) outline-none backdrop-blur-2xl will-change-transform focus-visible:border-inverse-muted focus-visible:ring-2 focus-visible:ring-inverse-faint sm:h-[360px] md:h-[400px] lg:h-[430px] lg:w-[380px] lg:max-w-none xl:h-[450px] xl:w-[400px] 2xl:h-[500px] 2xl:w-[430px]"
+      className={`stack-card group relative flex h-[320px] w-full max-w-full shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-inverse-faint bg-glass-dark shadow-(--shadow-stack-card) outline-none backdrop-blur-2xl focus-visible:border-inverse-muted focus-visible:ring-2 focus-visible:ring-inverse-faint sm:h-[360px] md:h-[400px] ${reducedMotion ? "lg:h-[430px] lg:w-full lg:max-w-full xl:h-[450px] 2xl:h-[500px]" : "will-change-transform lg:h-[430px] lg:w-[380px] lg:max-w-none xl:h-[450px] xl:w-[400px] 2xl:h-[500px] 2xl:w-[430px]"}`}
     >
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div ref={imageWrapRef} className="relative h-full w-full">
@@ -169,7 +172,7 @@ function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) 
           {item.name}
         </h3>
 
-        <div ref={metaRef} className="mt-4 flex translate-y-3 items-center gap-3 opacity-0 xl:mt-5">
+        <div ref={metaRef} className={`mt-4 flex items-center gap-3 xl:mt-5 ${reducedMotion ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}>
           <div className="h-px w-6 bg-inverse-faint xl:w-8" />
           <span className="font-inter text-[8px] font-semibold uppercase tracking-[0.24em] text-inverse-muted sm:text-[9px]">
             Highly Proficient
@@ -184,10 +187,12 @@ export default function TechStack() {
   const sectionRef = useRef<HTMLElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
       if (!sectionRef.current || !trackRef.current || !introRef.current) return;
+      if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
@@ -277,7 +282,7 @@ export default function TechStack() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   return (
@@ -311,7 +316,9 @@ export default function TechStack() {
 
         <div
           ref={trackRef}
-          className="flex w-full flex-col gap-4 py-2 sm:gap-5 lg:w-max lg:flex-row lg:items-center lg:gap-7 lg:pl-[18vw] lg:pr-[10vw] xl:gap-8 2xl:gap-9"
+          className={reducedMotion
+            ? "grid w-full grid-cols-1 gap-4 py-2 sm:gap-5 lg:grid-cols-2 lg:gap-7 xl:gap-8"
+            : "flex w-full flex-col gap-4 py-2 sm:gap-5 lg:w-max lg:flex-row lg:items-center lg:gap-7 lg:pl-[18vw] lg:pr-[10vw] xl:gap-8 2xl:gap-9"}
         >
           {stack.map((item, index) => (
             <StackCard key={item.name} item={item} index={index} />

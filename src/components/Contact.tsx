@@ -2,6 +2,7 @@
 
 import { gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useRef, useState } from "react";
@@ -15,6 +16,7 @@ const inquiryTypes = [
 ];
 
 export default function Contact() {
+  const reducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
   const leftRef = useRef<HTMLDivElement>(null);
@@ -66,6 +68,7 @@ export default function Contact() {
       ) {
         return;
       }
+      if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
@@ -208,7 +211,7 @@ export default function Contact() {
 
       return () => mm.revert();
     },
-    { scope: sectionRef }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   return (

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap, isReducedMotion } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { gsap } from "@/lib/gsap";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,9 +24,10 @@ export default function Footer() {
   const [time, setTime] = useState("");
   const footerRef = useRef<HTMLElement>(null);
   const brandRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
-  const xTo = useRef<((v: number) => void) | null>(null);
-  const yTo = useRef<((v: number) => void) | null>(null);
+  const xTo = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
+  const yTo = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -48,6 +50,7 @@ export default function Footer() {
   useGSAP(
     () => {
       if (!footerRef.current || !brandRef.current) return;
+      if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
@@ -65,8 +68,6 @@ export default function Footer() {
       });
 
       mm.add("(hover: hover) and (pointer: fine) and (min-width: 1024px)", () => {
-        if (isReducedMotion()) return;
-
         xTo.current = gsap.quickTo(brandRef.current, "x", {
           duration: 0.8,
           ease: "power3.out",
@@ -77,15 +78,22 @@ export default function Footer() {
           ease: "power3.out",
         });
 
+        return () => {
+          xTo.current?.tween.kill();
+          yTo.current?.tween.kill();
+          xTo.current = null;
+          yTo.current = null;
+          if (brandRef.current) gsap.set(brandRef.current, { x: 0, y: 0 });
+        };
       });
 
       return () => mm.revert();
     },
-    { scope: footerRef }
+    { scope: footerRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (isReducedMotion() || e.pointerType !== "mouse") return;
+    if (reducedMotion || e.pointerType !== "mouse") return;
     if (window.innerWidth < 1024) return;
 
     const brand = brandRef.current;
@@ -106,7 +114,7 @@ export default function Footer() {
       xTo.current(0);
       yTo.current(0);
     }
-  }, []);
+  }, [reducedMotion]);
 
   const handlePointerLeave = useCallback(() => {
     xTo.current?.(0);

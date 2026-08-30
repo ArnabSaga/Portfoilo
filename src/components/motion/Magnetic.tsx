@@ -1,8 +1,9 @@
 "use client";
 
 import { motion, gsap } from "@/lib/gsap";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { cloneElement, type ReactElement, useCallback, useRef } from "react";
+import { cloneElement, type ReactElement, useCallback, useEffect, useRef } from "react";
 
 interface MagneticProps {
   children: ReactElement<{ ref?: React.Ref<HTMLElement> }>;
@@ -11,32 +12,49 @@ interface MagneticProps {
 
 export function Magnetic({ children, strength = motion.magnetic.subtle }: MagneticProps) {
   const elementRef = useRef<HTMLElement | null>(null);
+  const xToRef = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
+  const yToRef = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
   const reducedMotion = useReducedMotion();
+  const finePointer = useMediaQuery("(hover: hover) and (pointer: fine)");
+  const enabled = finePointer && !reducedMotion;
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element || !enabled) return;
+
+    const xTo = gsap.quickTo(element, "x", {
+      duration: motion.duration.hover,
+      ease: motion.ease.interface,
+    });
+    const yTo = gsap.quickTo(element, "y", {
+      duration: motion.duration.hover,
+      ease: motion.ease.interface,
+    });
+    xToRef.current = xTo;
+    yToRef.current = yTo;
+
+    return () => {
+      xTo.tween.kill();
+      yTo.tween.kill();
+      xToRef.current = null;
+      yToRef.current = null;
+      gsap.set(element, { x: 0, y: 0 });
+    };
+  }, [enabled]);
 
   const handleMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (reducedMotion || event.pointerType !== "mouse" || !elementRef.current) return;
+      if (!enabled || event.pointerType !== "mouse" || !elementRef.current) return;
       const bounds = event.currentTarget.getBoundingClientRect();
-      gsap.to(elementRef.current, {
-        x: (event.clientX - bounds.left - bounds.width / 2) * strength,
-        y: (event.clientY - bounds.top - bounds.height / 2) * strength,
-        duration: motion.duration.hover,
-        ease: motion.ease.interface,
-        overwrite: "auto",
-      });
+      xToRef.current?.((event.clientX - bounds.left - bounds.width / 2) * strength);
+      yToRef.current?.((event.clientY - bounds.top - bounds.height / 2) * strength);
     },
-    [reducedMotion, strength]
+    [enabled, strength]
   );
 
   const reset = useCallback(() => {
-    if (!elementRef.current) return;
-    gsap.to(elementRef.current, {
-      x: 0,
-      y: 0,
-      duration: motion.duration.hover,
-      ease: motion.ease.interface,
-      overwrite: "auto",
-    });
+    xToRef.current?.(0);
+    yToRef.current?.(0);
   }, []);
 
   return (

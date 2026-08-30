@@ -3,9 +3,12 @@
 import { SplitText, gsap, motion } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useGSAP } from "@gsap/react";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useCallback, useRef } from "react";
+
+type SplitRevealElement = "span" | "p" | "h1" | "h2" | "h3";
 
 interface SplitRevealProps {
+  as?: SplitRevealElement;
   children: ReactNode;
   className?: string;
   direction?: "up" | "left" | "right";
@@ -13,6 +16,7 @@ interface SplitRevealProps {
 }
 
 export function SplitReveal({
+  as = "span",
   children,
   className,
   direction = "up",
@@ -20,32 +24,58 @@ export function SplitReveal({
 }: SplitRevealProps) {
   const elementRef = useRef<HTMLElement>(null);
   const reducedMotion = useReducedMotion();
+  const setElementRef = useCallback((node: HTMLElement | null) => {
+    elementRef.current = node;
+  }, []);
 
   useGSAP(
     () => {
       if (!elementRef.current || reducedMotion) return;
 
-      const split = new SplitText(elementRef.current, {
-        type: "lines",
-        mask: "lines",
-        linesClass: "split-reveal-line",
-      });
-      const from =
-        direction === "left" ? { xPercent: -8 } : direction === "right" ? { xPercent: 8 } : { yPercent: 105 };
+      let cancelled = false;
+      let split: SplitText | null = null;
+      let animation: gsap.core.Tween | null = null;
 
-      gsap.from(split.lines, {
-        ...from,
-        opacity: 0,
-        duration: motion.duration.major,
-        stagger: motion.stagger.text,
-        delay,
-        ease: motion.ease.enter,
-      });
+      const initialize = () => {
+        if (cancelled || !elementRef.current) return;
 
-      return () => split.revert();
+        split = new SplitText(elementRef.current, {
+          type: "lines",
+          mask: "lines",
+          linesClass: "split-reveal-line",
+          autoSplit: true,
+          onSplit: (instance) => {
+            animation?.kill();
+            const from =
+              direction === "left"
+                ? { xPercent: -8 }
+                : direction === "right"
+                  ? { xPercent: 8 }
+                  : { yPercent: 105 };
+
+            animation = gsap.from(instance.lines, {
+              ...from,
+              opacity: 0,
+              duration: motion.duration.major,
+              stagger: motion.stagger.text,
+              delay,
+              ease: motion.ease.enter,
+            });
+          },
+        });
+      };
+
+      void document.fonts.ready.then(initialize);
+
+      return () => {
+        cancelled = true;
+        animation?.kill();
+        split?.revert();
+      };
     },
-    { scope: elementRef, dependencies: [delay, direction, reducedMotion] }
+    { scope: elementRef, dependencies: [delay, direction, reducedMotion], revertOnUpdate: true }
   );
 
-  return <span ref={elementRef} className={className}>{children}</span>;
+  const Element = as;
+  return <Element ref={setElementRef} className={className}>{children}</Element>;
 }

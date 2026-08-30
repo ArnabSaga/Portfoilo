@@ -2,10 +2,11 @@
 
 import { SplitReveal } from "@/components/motion/SplitReveal";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { usePointerParallax } from "@/hooks/usePointerParallax";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { gsap, motion } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
-import { useCallback, useRef } from "react";
+import { useMemo, useRef } from "react";
 
 const statements = [
   "High-end digital systems",
@@ -22,6 +23,21 @@ export default function Hero() {
   const reducedMotion = useReducedMotion();
   const desktopPointer = useMediaQuery("(min-width: 1025px) and (hover: hover) and (pointer: fine)");
   const hasLens = desktopPointer && !reducedMotion;
+  const parallaxLayers = useMemo(
+    () => [
+      { ref: mediaRef, strength: motion.pointer.media },
+      { ref: frameRef, strength: motion.pointer.frame },
+      { ref: orbitRef, strength: motion.pointer.orbit },
+    ],
+    []
+  );
+
+  usePointerParallax({
+    rootRef: sectionRef,
+    cursorRef: lensRef,
+    layers: parallaxLayers,
+    enabled: hasLens,
+  });
 
   useGSAP(
     () => {
@@ -86,31 +102,13 @@ export default function Hero() {
       }, sectionRef);
       return () => context.revert();
     },
-    { scope: sectionRef, dependencies: [hasLens, reducedMotion] }
-  );
-
-  const handlePointerMove = useCallback(
-    (event: React.PointerEvent<HTMLElement>) => {
-      if (!hasLens || !sectionRef.current || !lensRef.current) return;
-      const bounds = sectionRef.current.getBoundingClientRect();
-      const x = event.clientX - bounds.left;
-      const y = event.clientY - bounds.top;
-      gsap.to(lensRef.current, { x, y, duration: motion.duration.hover, ease: motion.ease.interface, overwrite: "auto" });
-
-      const dx = event.clientX - bounds.left - bounds.width / 2;
-      const dy = event.clientY - bounds.top - bounds.height / 2;
-      if (mediaRef.current) gsap.to(mediaRef.current, { x: dx * motion.pointer.media, y: dy * motion.pointer.media, overwrite: "auto" });
-      if (frameRef.current) gsap.to(frameRef.current, { x: dx * motion.pointer.frame, y: dy * motion.pointer.frame, overwrite: "auto" });
-      if (orbitRef.current) gsap.to(orbitRef.current, { x: dx * motion.pointer.orbit, y: dy * motion.pointer.orbit, overwrite: "auto" });
-    },
-    [hasLens]
+    { scope: sectionRef, dependencies: [hasLens, reducedMotion], revertOnUpdate: true }
   );
 
   return (
     <section
       id="hero"
       ref={sectionRef}
-      onPointerMove={handlePointerMove}
       className="hero-grid relative flex min-h-screen overflow-hidden bg-background px-4 pb-14 pt-28 text-foreground sm:px-6 md:px-8 lg:items-end lg:pb-16"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_32%,var(--color-surface)_0%,transparent_34%)] opacity-60" />

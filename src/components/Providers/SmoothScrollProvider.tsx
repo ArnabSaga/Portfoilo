@@ -1,11 +1,10 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
-import { ReactLenis } from "lenis/react";
-import { ReactNode, useEffect, useRef } from "react";
-import { gsap, ScrollTrigger, isReducedMotion } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import type { LenisRef } from "lenis/react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 interface SmoothScrollProviderProps {
   children: ReactNode;
@@ -15,19 +14,66 @@ const ANCHOR_SCROLL_OFFSET = 96;
 const ANCHOR_REFRESH_DELAY = 80;
 
 export default function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
-  const lenisRef = useRef<LenisRef>(null);
+  const reducedMotion = useReducedMotion();
+  const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    if (reducedMotion) return;
+
+    const lenis = new Lenis({
+      lerp: 0.08,
+      smoothWheel: true,
+      wheelMultiplier: 1.1,
+      touchMultiplier: 2,
+      infinite: false,
+      autoRaf: false,
+    });
+    const handleScroll = () => ScrollTrigger.update();
+    const unsubscribeScroll = lenis.on("scroll", handleScroll);
+    const handleTick = (time: number) => lenis.raf(time * 1000);
+
+    lenisRef.current = lenis;
+    gsap.ticker.add(handleTick);
+
+    return () => {
+      unsubscribeScroll();
+      gsap.ticker.remove(handleTick);
+      lenis.destroy();
+      if (lenisRef.current === lenis) lenisRef.current = null;
+    };
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+
+    const timers = new Set<number>();
+    let navigationTimer: number | null = null;
+
+    const schedule = (callback: () => void, delay: number) => {
+      const timer = window.setTimeout(() => {
+        timers.delete(timer);
+        callback();
+      }, delay);
+      timers.add(timer);
+      return timer;
+    };
+
     const scrollToHash = (hash: string, immediate = false) => {
       if (!hash || hash === "#") return;
 
-      const target = document.querySelector<HTMLElement>(hash);
+      let id: string;
+      try {
+        id = decodeURIComponent(hash.slice(1));
+      } catch {
+        return;
+      }
+
+      const target = document.getElementById(id);
       if (!target) return;
 
       ScrollTrigger.refresh();
-
       const targetY = window.scrollY + target.getBoundingClientRect().top - ANCHOR_SCROLL_OFFSET;
-      const lenis = lenisRef.current?.lenis;
+      const lenis = lenisRef.current;
 
       if (lenis) {
         lenis.scrollTo(targetY, {
@@ -35,14 +81,22 @@ export default function SmoothScrollProvider({ children }: SmoothScrollProviderP
           duration: immediate ? 0 : 1.1,
         });
       } else {
-        window.scrollTo({
-          top: targetY,
-          behavior: immediate || isReducedMotion() ? "auto" : "smooth",
-        });
+        window.scrollTo({ top: targetY, behavior: "auto" });
       }
 
       ScrollTrigger.update();
-      window.setTimeout(() => ScrollTrigger.update(), immediate ? ANCHOR_REFRESH_DELAY : 1200);
+      schedule(() => ScrollTrigger.update(), immediate ? ANCHOR_REFRESH_DELAY : 1200);
+    };
+
+    const scheduleHashScroll = (hash: string, immediate = false) => {
+      if (navigationTimer !== null) {
+        window.clearTimeout(navigationTimer);
+        timers.delete(navigationTimer);
+      }
+      navigationTimer = schedule(() => {
+        navigationTimer = null;
+        scrollToHash(hash, immediate);
+      }, ANCHOR_REFRESH_DELAY);
     };
 
     const handleClick = (event: MouseEvent) => {
@@ -57,66 +111,45 @@ export default function SmoothScrollProvider({ children }: SmoothScrollProviderP
         return;
       }
 
-      const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]');
-      if (!anchor) return;
+      const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.hasAttribute("download") || anchor.target) return;
 
-      const hash = anchor.getAttribute("href");
-      if (!hash || hash === "#") return;
+      const destination = new URL(anchor.href, window.location.href);
+      const current = new URL(window.location.href);
+      const sameDocument =
+        destination.origin === current.origin &&
+        destination.pathname === current.pathname &&
+        destination.search === current.search;
+
+      if (!sameDocument || !destination.hash || destination.hash === "#") return;
 
       event.preventDefault();
-      window.history.pushState(null, "", hash);
-      window.setTimeout(() => scrollToHash(hash), ANCHOR_REFRESH_DELAY);
+      if (destination.hash !== window.location.hash) {
+        window.history.pushState(null, "", destination.hash);
+      }
+      scheduleHashScroll(destination.hash);
     };
 
-    const handleHashChange = () => {
-      window.setTimeout(() => scrollToHash(window.location.hash, true), ANCHOR_REFRESH_DELAY);
+    const handleHistoryNavigation = () => {
+      scheduleHashScroll(window.location.hash, true);
     };
 
     document.addEventListener("click", handleClick);
-    window.addEventListener("hashchange", handleHashChange);
+    window.addEventListener("hashchange", handleHistoryNavigation);
+    window.addEventListener("popstate", handleHistoryNavigation);
 
     if (window.location.hash) {
-      window.setTimeout(() => scrollToHash(window.location.hash, true), ANCHOR_REFRESH_DELAY);
+      scheduleHashScroll(window.location.hash, true);
     }
 
     return () => {
       document.removeEventListener("click", handleClick);
-      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("hashchange", handleHistoryNavigation);
+      window.removeEventListener("popstate", handleHistoryNavigation);
+      timers.forEach((timer) => window.clearTimeout(timer));
+      timers.clear();
     };
-  }, []);
+  }, [reducedMotion]);
 
-  useEffect(() => {
-    // Basic setup for Lenis + ScrollTrigger sync
-    function update(time: number) {
-      lenisRef.current?.lenis?.raf(time * 1000);
-    }
-    
-    gsap.ticker.add(update);
-    
-    return () => {
-      gsap.ticker.remove(update);
-    };
-  }, []);
-
-  useGSAP(() => {
-    // Connect ScrollTrigger to Lenis scroll
-    if (lenisRef.current?.lenis) {
-      lenisRef.current.lenis.on("scroll", ScrollTrigger.update);
-    }
-  }, { scope: undefined });
-
-  // Handle reduced motion
-  const options = {
-    lerp: isReducedMotion() ? 1 : 0.08,
-    smoothWheel: !isReducedMotion(),
-    wheelMultiplier: 1.1,
-    touchMultiplier: 2,
-    infinite: false,
-  };
-
-  return (
-    <ReactLenis root ref={lenisRef} options={options} autoRaf={false}>
-      {children}
-    </ReactLenis>
-  );
+  return children;
 }
