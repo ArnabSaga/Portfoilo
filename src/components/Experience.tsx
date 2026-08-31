@@ -1,431 +1,868 @@
 "use client";
 
-import { gsap } from "@/lib/gsap";
+import { experienceChapters } from "@/content/experience";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { gsap, motion, ScrollTrigger } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
+import { type RefObject, useRef } from "react";
 
-const experiences = [
-  {
-    step: "01",
-    title: "Starting As Developer",
-    company: "Self",
-    side: "right",
-    period: "2022 — 2023",
-    description:
-      "Started with fundamentals, frontend systems, component thinking, and clean implementation habits.",
-    accent: "from-[#f2c4b7] to-[#d8a091]",
-    text: "#2d1f1a",
-  },
-  {
-    step: "02",
-    title: "Frontend Engineer",
-    company: "Craft & Systems",
-    side: "left",
-    period: "2023 — 2024",
-    description:
-      "Focused on interaction design, design systems, animation principles, and scalable UI architecture.",
-    accent: "from-[#8d8190] to-[#4d3e4c]",
-    text: "#ffffff",
-  },
-  {
-    step: "03",
-    title: "Full Stack Developer",
-    company: "Product & Platform",
-    side: "right",
-    period: "2024 — 2025",
-    description:
-      "Built complete products with Next.js, Node.js, Prisma, authentication, RBAC, and production-ready flows.",
-    accent: "from-[#5b4a57] to-[#1d151d]",
-    text: "#ffffff",
-  },
-  {
-    step: "04",
-    title: "System Builder",
-    company: "Architecture First",
-    side: "left",
-    period: "2026 — Present",
-    description:
-      "Designing systems with stronger motion direction, premium interfaces, scalable backend thinking, and SaaS structure.",
-    accent: "from-[#d95c44] to-[#8c2f23]",
-    text: "#ffffff",
-  },
-];
+const CINEMATIC_QUERY =
+  "(min-width: 1025px) and (prefers-reduced-motion: no-preference)";
+const STACKED_REVEAL_QUERY =
+  "(max-width: 1024px) and (prefers-reduced-motion: no-preference)";
 
-const PILL_FOLD_OFFSETS = [150, -140, 125, -105];
-const TEXT_FOLD_OFFSETS = [300, -360, 320, -340];
-const CONNECTOR_ROTATIONS = [-20, 18, -16, 14];
+const WORLD_WIDTH = 1600;
+const WORLD_HEIGHT = 2920;
+const SCROLL_DISTANCE_FACTOR = 4.3;
+const LAST_CHAPTER = experienceChapters.length - 1;
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const CAMERA_STOPS = [0, -700, -1410, -2140] as const;
+
+// Derived from the approved route geometry at 605, 2115, 3735, and 5295.
+const PATH_STOPS = [0.114, 0.399, 0.705, 1] as const;
+
+const CAREER_ROUTE = [
+  "M 335 450",
+  "H 780",
+  "V 610",
+  "H 1210",
+  "V 1120",
+  "H 840",
+  "V 1320",
+  "H 350",
+  "V 1880",
+  "H 760",
+  "V 2040",
+  "H 1210",
+  "V 2580",
+  "H 840",
+  "V 2780",
+].join(" ");
+
+const CHAPTER_POSITIONS = [
+  { insetInlineStart: "7.5%", top: 140 },
+  { insetInlineStart: "63.125%", top: 820 },
+  { insetInlineStart: "8.75%", top: 1530 },
+  { insetInlineStart: "62.5%", top: 2240 },
+] as const;
+
+const NODE_POSITIONS = [
+  { x: 780, y: 610 },
+  { x: 840, y: 1320 },
+  { x: 760, y: 2040 },
+  { x: 840, y: 2780 },
+] as const;
+
+const ENVIRONMENTAL_MARKERS = [
+  { label: "START / 2022", insetInlineStart: "20.9%", top: 408 },
+  { label: "UI SYSTEMS", insetInlineStart: "77%", top: 1064 },
+  { label: "FULL STACK", insetInlineStart: "48%", top: 1282 },
+  { label: "ARCHITECTURE", insetInlineStart: "18%", top: 1842 },
+  { label: "PRESENT / 2026+", insetInlineStart: "53%", top: 2732 },
+] as const;
+
+const TITLE_LINES: Record<string, readonly string[]> = {
+  "Starting As Developer": ["Starting", "As", "Developer"],
+  "Frontend Engineer": ["Frontend", "Engineer"],
+  "Full Stack Developer": ["Full Stack", "Developer"],
+  "System Builder": ["System", "Builder"],
+};
+
+interface CareerNodeElements {
+  root: SVGGElement;
+  ring: SVGCircleElement;
+  center: SVGCircleElement;
+}
+
+function clampRange(value: number, start: number, end: number) {
+  return gsap.utils.clamp(0, 1, (value - start) / (end - start));
+}
+
+function easedRange(
+  value: number,
+  start: number,
+  end: number,
+  ease: gsap.EaseFunction,
+) {
+  return ease(clampRange(value, start, end));
+}
+
+function setCardExposure(card: HTMLElement, hidden: boolean) {
+  if (hidden && card.contains(document.activeElement)) return;
+  card.setAttribute("aria-hidden", String(hidden));
+}
+
+function ExperienceTitle({
+  title,
+  className,
+}: {
+  title: string;
+  className: string;
+}) {
+  const lines = TITLE_LINES[title] ?? [title];
+
+  return (
+    <span className={className} aria-label={title} role="text">
+      {lines.map((line) => (
+        <span key={line} className="block whitespace-nowrap">
+          {line}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function RouteSvg({
+  activePathRef,
+}: {
+  activePathRef: RefObject<SVGPathElement | null>;
+}) {
+  return (
+    <svg
+      data-career-route-svg
+      aria-hidden="true"
+      viewBox={`0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`}
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-visible"
+    >
+      <path
+        data-career-route="base"
+        d={CAREER_ROUTE}
+        fill="none"
+        vectorEffect="non-scaling-stroke"
+        className="stroke-inverse-faint"
+        strokeWidth="1.25"
+      />
+      <path
+        ref={activePathRef}
+        data-career-route="active"
+        d={CAREER_ROUTE}
+        fill="none"
+        pathLength="1"
+        strokeDasharray="1"
+        strokeDashoffset="1"
+        vectorEffect="non-scaling-stroke"
+        className="stroke-experience-signal"
+        strokeWidth="1.75"
+      />
+    </svg>
+  );
+}
+
+function NodeSvg({
+  nodeRefs,
+}: {
+  nodeRefs: RefObject<Array<SVGGElement | null>>;
+}) {
+  return (
+    <svg
+      data-career-node-svg
+      aria-hidden="true"
+      viewBox={`0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`}
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 z-40 h-full w-full overflow-visible"
+    >
+      {NODE_POSITIONS.map((node, index) => (
+        <g
+          key={experienceChapters[index].step}
+          ref={(element) => {
+            nodeRefs.current[index] = element;
+          }}
+          data-career-node
+          data-node-index={index}
+          className="text-inverse"
+        >
+          <circle
+            cx={node.x}
+            cy={node.y}
+            r="18"
+            fill="var(--color-section-dark)"
+            vectorEffect="non-scaling-stroke"
+            className="stroke-inverse-faint"
+            strokeWidth="1"
+          />
+          <circle
+            data-node-ring
+            cx={node.x}
+            cy={node.y}
+            r="27"
+            fill="none"
+            vectorEffect="non-scaling-stroke"
+            className="stroke-experience-signal"
+            strokeWidth="1.25"
+          />
+          <circle
+            data-node-center
+            cx={node.x}
+            cy={node.y}
+            r="6"
+            vectorEffect="non-scaling-stroke"
+            className="fill-experience-signal"
+          />
+          <text
+            x={node.x + 38}
+            y={node.y - 18}
+            vectorEffect="non-scaling-stroke"
+            className="fill-inverse font-inter text-[11px] font-bold tracking-[0.22em]"
+          >
+            {experienceChapters[index].step}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function StackedCareerPath() {
+  return (
+    <ol className="mx-auto max-w-6xl">
+      {experienceChapters.map((chapter, index) => {
+        const alignRight = index % 2 === 1;
+        const connectorBendsRight = index % 2 === 0;
+
+        return (
+          <li
+            key={chapter.step}
+            className="experience-career-item relative"
+          >
+            <article
+              className={`w-[92%] rounded-sm border border-inverse-faint bg-glass-dark p-6 sm:w-[82%] sm:p-8 lg:w-[42rem] ${
+                alignRight ? "ms-auto" : "me-auto"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-4 border-b border-inverse-faint pb-5">
+                <p className="flex items-center gap-3 font-inter text-[10px] font-bold uppercase tracking-[0.26em] text-experience-signal">
+                  <span
+                    data-stacked-node
+                    aria-hidden="true"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-experience-signal"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-experience-signal" />
+                  </span>
+                  {chapter.step} / {chapter.phase}
+                </p>
+                <time className="shrink-0 font-inter text-[10px] font-semibold uppercase tracking-[0.2em] text-inverse/45">
+                  {chapter.period}
+                </time>
+              </div>
+
+              <div className="mt-8">
+                <h3>
+                  <ExperienceTitle
+                    title={chapter.title}
+                    className="block max-w-full font-syne text-[1.62rem] font-extrabold uppercase leading-[0.9] text-inverse sm:text-[2.1rem]"
+                  />
+                </h3>
+                <p className="mt-4 font-inter text-xs font-semibold uppercase tracking-[0.2em] text-inverse/45">
+                  {chapter.context}
+                </p>
+              </div>
+
+              <div className="mt-8 border-t border-inverse-faint pt-6">
+                <p className="max-w-[46ch] font-inter text-base leading-7 text-inverse-muted">
+                  {chapter.description}
+                </p>
+                <p className="mt-7 font-inter text-[9px] font-bold uppercase tracking-[0.28em] text-experience-signal">
+                  Chapter / {chapter.phase}
+                </p>
+              </div>
+            </article>
+
+            {index < LAST_CHAPTER && (
+              <svg
+                data-stacked-connector
+                aria-hidden="true"
+                viewBox="0 0 100 80"
+                preserveAspectRatio="none"
+                className="block h-20 w-full overflow-visible"
+              >
+                <path
+                  d={
+                    connectorBendsRight
+                      ? "M 24 0 V 34 H 76 V 80"
+                      : "M 76 0 V 34 H 24 V 80"
+                  }
+                  fill="none"
+                  vectorEffect="non-scaling-stroke"
+                  className="stroke-inverse-faint"
+                  strokeWidth="1"
+                />
+                <path
+                  data-stacked-signal
+                  d={
+                    connectorBendsRight
+                      ? "M 24 0 V 34 H 76 V 80"
+                      : "M 76 0 V 34 H 24 V 80"
+                  }
+                  fill="none"
+                  pathLength="1"
+                  strokeDasharray="1"
+                  strokeDashoffset="0"
+                  vectorEffect="non-scaling-stroke"
+                  className="stroke-experience-signal/45"
+                  strokeWidth="1"
+                />
+              </svg>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 export default function Experience() {
   const sectionRef = useRef<HTMLElement>(null);
-  const pinWrapRef = useRef<HTMLDivElement>(null);
-  const introRef = useRef<HTMLDivElement>(null);
+  const stackedRef = useRef<HTMLDivElement>(null);
+  const cinematicRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const activePathRef = useRef<SVGPathElement>(null);
+  const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const nodeRefs = useRef<Array<SVGGElement | null>>([]);
+  const telemetryRef = useRef<HTMLSpanElement>(null);
   const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
-      if (!sectionRef.current || !pinWrapRef.current || !introRef.current) return;
+      const section = sectionRef.current;
+      const stacked = stackedRef.current;
+      const cinematic = cinematicRef.current;
+      const world = worldRef.current;
+      const activePath = activePathRef.current;
+      const telemetry = telemetryRef.current;
+      const cards = cardRefs.current.filter(
+        (card): card is HTMLElement => card !== null,
+      );
+      const cardContents = cards
+        .map((card) => card.querySelector<HTMLElement>("[data-card-content]"))
+        .filter((content): content is HTMLElement => content !== null);
+      const nodeRoots = nodeRefs.current.filter(
+        (node): node is SVGGElement => node !== null,
+      );
+
+      if (!section || !stacked || !cinematic || !world || !activePath || !telemetry) {
+        return;
+      }
+
+      const restoreStaticCareerPath = () => {
+        stacked.hidden = false;
+        stacked.removeAttribute("aria-hidden");
+        cinematic.setAttribute("aria-hidden", "true");
+        cinematic.style.visibility = "hidden";
+        cinematic.style.opacity = "0";
+        cinematic.style.pointerEvents = "none";
+        delete section.dataset.experienceEnhanced;
+      };
+
+      restoreStaticCareerPath();
+
       if (reducedMotion) return;
 
       const mm = gsap.matchMedia();
 
-      mm.add("(min-width: 1025px)", () => {
-        const rows = gsap.utils.toArray<HTMLElement>(".exp-row");
-        const pills = gsap.utils.toArray<HTMLElement>(".exp-pill");
-        const textBlocks = gsap.utils.toArray<HTMLElement>(".exp-text");
-        const numbers = gsap.utils.toArray<HTMLElement>(".exp-number");
-        const markers = gsap.utils.toArray<HTMLElement>(".exp-marker");
-        const connectors = gsap.utils.toArray<HTMLElement>(".exp-connector");
-        const connectorLines = gsap.utils.toArray<HTMLElement>(".exp-connector-line");
-        const connectorDots = gsap.utils.toArray<HTMLElement>(".exp-connector-dot");
-        const beamRef = sectionRef.current?.querySelector(".exp-beam");
-        const glowRef = sectionRef.current?.querySelector(".exp-glow");
+      mm.add(CINEMATIC_QUERY, () => {
+        let active = true;
+        let proxyTween: gsap.core.Tween | null = null;
+        let experienceTrigger: ScrollTrigger | null = null;
+        let lastDominantIndex = -1;
+        const proxy = { position: 0 };
 
-        const state = { progress: 0 };
-
-        gsap.set(pills, { willChange: "transform" });
-        gsap.set(textBlocks, { willChange: "transform, opacity" });
-        gsap.set(numbers, { willChange: "transform, opacity" });
-        gsap.set(connectors, { willChange: "transform, opacity" });
-        gsap.set(markers, { willChange: "transform, opacity" });
-
-        if (beamRef) {
-          gsap.set(beamRef, {
-            opacity: 0.22,
-            scaleY: 0.94,
-            transformOrigin: "center top",
-          });
+        if (
+          cards.length !== experienceChapters.length ||
+          cardContents.length !== experienceChapters.length ||
+          nodeRoots.length !== experienceChapters.length
+        ) {
+          return;
         }
 
-        if (glowRef) {
-          gsap.set(glowRef, {
-            opacity: 0.14,
-            scale: 0.94,
-          });
-        }
-
-        function render(progress: number) {
-          rows.forEach((_, index) => {
-            const pill = pills[index];
-            const text = textBlocks[index];
-            const number = numbers[index];
-            const marker = markers[index];
-            const connector = connectors[index];
-            const line = connectorLines[index];
-            const dot = connectorDots[index];
-
-            const pillX = lerp(PILL_FOLD_OFFSETS[index], 0, progress);
-            const textX = lerp(TEXT_FOLD_OFFSETS[index], 0, progress);
-            const rotation = lerp(CONNECTOR_ROTATIONS[index], 0, progress);
-
-            gsap.set(pill, {
-              x: pillX,
-              rotation: lerp(PILL_FOLD_OFFSETS[index] > 0 ? 10 : -10, 0, progress),
-              scaleX: lerp(0.96, 1, progress),
-              scaleY: lerp(1.02, 1, progress),
-              transformOrigin: "center center",
-            });
-
-            gsap.set(text, {
-              x: textX,
-              opacity: lerp(0.72, 1, progress),
-            });
-
-            gsap.set(number, {
-              y: lerp(PILL_FOLD_OFFSETS[index] > 0 ? 12 : -12, 0, progress),
-              rotation: lerp(PILL_FOLD_OFFSETS[index] > 0 ? 5 : -5, 0, progress),
-              opacity: lerp(0.85, 1, progress),
-            });
-
-            gsap.set(marker, {
-              scale: lerp(0.84, 1, progress),
-              opacity: lerp(0.7, 1, progress),
-            });
-
-            gsap.set(connector, {
-              rotation,
-              opacity: lerp(0.18, 0.62, progress),
-              scaleX: lerp(0.88, 1, progress),
-              transformOrigin: experiences[index].side === "left" ? "right center" : "left center",
-            });
-
-            gsap.set(line, {
-              opacity: lerp(0.12, 0.38, progress),
-            });
-
-            gsap.set(dot, {
-              scale: lerp(0.75, 1, progress),
-              opacity: lerp(0.42, 1, progress),
-            });
-          });
-
-          if (beamRef) {
-            gsap.set(beamRef, {
-              opacity: lerp(0.22, 0.5, progress),
-              scaleY: lerp(0.94, 1, progress),
-            });
-          }
-
-          if (glowRef) {
-            gsap.set(glowRef, {
-              opacity: lerp(0.14, 0.3, progress),
-              scale: lerp(0.94, 1.05, progress),
-            });
-          }
-        }
-
-        render(0);
-
-        gsap.from(introRef.current, {
-          opacity: 0,
-          y: 36,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 82%",
-            once: true,
-          },
+        const nodes = nodeRoots.map<CareerNodeElements>((root) => {
+          const ring = root.querySelector<SVGCircleElement>("[data-node-ring]");
+          const center = root.querySelector<SVGCircleElement>("[data-node-center]");
+          if (!ring || !center) throw new Error("Experience node geometry is incomplete");
+          return { root, ring, center };
         });
 
-        gsap.to(state, {
-          progress: 1,
-          ease: "none",
-          onUpdate: () => render(state.progress),
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: "+=2400",
-            scrub: 1.05,
-            pin: pinWrapRef.current,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-          },
-        });
+        const easeInterface = gsap.parseEase(motion.ease.interface);
+        const easeTravel = gsap.parseEase("power2.inOut");
+
+        const updateDominance = (dominantIndex: number) => {
+          if (dominantIndex === lastDominantIndex) return;
+
+          cards.forEach((card, index) => {
+            const dominant = index === dominantIndex;
+            setCardExposure(card, !dominant);
+            if (dominant) {
+              card.dataset.careerDominant = "true";
+            } else {
+              delete card.dataset.careerDominant;
+            }
+          });
+
+          telemetry.textContent = experienceChapters[dominantIndex].step;
+          section.dataset.experienceChapter = String(dominantIndex + 1);
+          lastDominantIndex = dominantIndex;
+        };
+
+        const renderNode = (
+          node: CareerNodeElements,
+          state: "past" | "current" | "future" | "leaving" | "arriving",
+          progress = 0,
+        ) => {
+          if (state === "past") {
+            gsap.set(node.root, { opacity: 0.58 });
+            gsap.set(node.ring, { opacity: 0, scale: 0.82, transformOrigin: "center" });
+            gsap.set(node.center, { opacity: 0.45, scale: 0.75, transformOrigin: "center" });
+            return;
+          }
+
+          if (state === "future") {
+            gsap.set(node.root, { opacity: 0.3 });
+            gsap.set(node.ring, { opacity: 0, scale: 0.82, transformOrigin: "center" });
+            gsap.set(node.center, { opacity: 0, scale: 0.7, transformOrigin: "center" });
+            return;
+          }
+
+          if (state === "current") {
+            gsap.set(node.root, { opacity: 1 });
+            gsap.set(node.ring, { opacity: 1, scale: 1, transformOrigin: "center" });
+            gsap.set(node.center, { opacity: 1, scale: 1, transformOrigin: "center" });
+            return;
+          }
+
+          if (state === "leaving") {
+            gsap.set(node.root, { opacity: gsap.utils.interpolate(1, 0.58, progress) });
+            gsap.set(node.ring, {
+              opacity: 1 - progress,
+              scale: gsap.utils.interpolate(1, 0.82, progress),
+              transformOrigin: "center",
+            });
+            gsap.set(node.center, {
+              opacity: gsap.utils.interpolate(1, 0.45, progress),
+              scale: gsap.utils.interpolate(1, 0.75, progress),
+              transformOrigin: "center",
+            });
+            return;
+          }
+
+          gsap.set(node.root, { opacity: gsap.utils.interpolate(0.3, 1, progress) });
+          gsap.set(node.ring, {
+            opacity: progress,
+            scale: gsap.utils.interpolate(0.82, 1, progress),
+            transformOrigin: "center",
+          });
+          gsap.set(node.center, {
+            opacity: progress,
+            scale: gsap.utils.interpolate(0.7, 1, progress),
+            transformOrigin: "center",
+          });
+        };
+
+        const renderCareerPath = (rawPosition: number) => {
+          if (!active) return;
+
+          const position = gsap.utils.clamp(0, LAST_CHAPTER, rawPosition);
+          let currentIndex: number;
+          let nextIndex: number | null;
+          let localProgress: number;
+          let cameraY: number;
+          let pathProgress: number;
+
+          if (position >= LAST_CHAPTER) {
+            currentIndex = LAST_CHAPTER;
+            nextIndex = null;
+            localProgress = 0;
+            cameraY = CAMERA_STOPS[LAST_CHAPTER];
+            pathProgress = PATH_STOPS[LAST_CHAPTER];
+          } else {
+            currentIndex = Math.floor(position);
+            nextIndex = currentIndex + 1;
+            localProgress = position - currentIndex;
+
+            const travel = easedRange(localProgress, 0.22, 0.72, easeTravel);
+            cameraY = gsap.utils.interpolate(
+              CAMERA_STOPS[currentIndex],
+              CAMERA_STOPS[nextIndex],
+              travel,
+            );
+            pathProgress = gsap.utils.interpolate(
+              PATH_STOPS[currentIndex],
+              PATH_STOPS[nextIndex],
+              travel,
+            );
+          }
+
+          const outgoing = easedRange(
+            localProgress,
+            0.18,
+            0.52,
+            easeInterface,
+          );
+          const incoming = easedRange(
+            localProgress,
+            0.52,
+            0.78,
+            easeInterface,
+          );
+          const nodeTransfer = easedRange(
+            localProgress,
+            0.42,
+            0.58,
+            easeInterface,
+          );
+          const dominantIndex =
+            nextIndex !== null && localProgress >= 0.56
+              ? nextIndex
+              : currentIndex;
+
+          gsap.set(world, { y: cameraY });
+          activePath.setAttribute(
+            "stroke-dashoffset",
+            String(1 - pathProgress),
+          );
+
+          cards.forEach((card, index) => {
+            const content = cardContents[index];
+
+            if (index === currentIndex) {
+              gsap.set(card, {
+                opacity: 1,
+                scale: gsap.utils.interpolate(1, 0.98, outgoing),
+                y: gsap.utils.interpolate(0, -12, outgoing),
+              });
+              gsap.set(content, {
+                opacity: gsap.utils.interpolate(1, 0.48, outgoing),
+              });
+              return;
+            }
+
+            if (index === nextIndex) {
+              gsap.set(card, {
+                opacity: 1,
+                scale: gsap.utils.interpolate(0.965, 1, incoming),
+                y: gsap.utils.interpolate(24, 0, incoming),
+              });
+              gsap.set(content, {
+                opacity: gsap.utils.interpolate(0.28, 1, incoming),
+              });
+              return;
+            }
+
+            gsap.set(card, { opacity: 1, scale: 0.965, y: 0 });
+            gsap.set(content, { opacity: 0.18 });
+          });
+
+          nodes.forEach((node, index) => {
+            if (index < currentIndex) {
+              renderNode(node, "past");
+            } else if (index === currentIndex) {
+              renderNode(
+                node,
+                nextIndex === null ? "current" : "leaving",
+                nodeTransfer,
+              );
+            } else if (index === nextIndex) {
+              renderNode(node, "arriving", nodeTransfer);
+            } else {
+              renderNode(node, "future");
+            }
+          });
+
+          updateDominance(dominantIndex);
+        };
+
+        const clearCinematicState = () => {
+          gsap.set(
+            [
+              world,
+              activePath,
+              ...cards,
+              ...cardContents,
+              ...nodes.flatMap((node) => [node.root, node.ring, node.center]),
+            ],
+            { clearProps: "all" },
+          );
+          cards.forEach((card) => {
+            card.setAttribute("aria-hidden", "true");
+            delete card.dataset.careerDominant;
+            card.style.willChange = "";
+          });
+          cardContents.forEach((content) => {
+            content.style.willChange = "";
+          });
+          world.style.willChange = "";
+          activePath.style.willChange = "";
+          activePath.setAttribute("stroke-dashoffset", "1");
+          telemetry.textContent = experienceChapters[0].step;
+          delete section.dataset.experienceChapter;
+          lastDominantIndex = -1;
+        };
+
+        const teardownCinematic = () => {
+          active = false;
+          experienceTrigger?.kill();
+          experienceTrigger = null;
+          proxyTween?.kill();
+          proxyTween = null;
+          clearCinematicState();
+          restoreStaticCareerPath();
+        };
+
+        try {
+          world.style.willChange = "transform";
+          activePath.style.willChange = "stroke-dashoffset";
+          cards.forEach((card) => {
+            card.style.willChange = "transform";
+          });
+          cardContents.forEach((content) => {
+            content.style.willChange = "opacity";
+          });
+
+          renderCareerPath(0);
+
+          proxyTween = gsap.to(proxy, {
+            position: LAST_CHAPTER,
+            ease: "none",
+            onUpdate: () => renderCareerPath(proxy.position),
+            scrollTrigger: {
+              id: "experience-career-path",
+              trigger: cinematic,
+              start: "top top",
+              end: () =>
+                `+=${Math.round(window.innerHeight * SCROLL_DISTANCE_FACTOR)}`,
+              scrub: 0.8,
+              pin: true,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+              onRefresh: () => renderCareerPath(proxy.position),
+            },
+          });
+          experienceTrigger = proxyTween.scrollTrigger ?? null;
+          if (!experienceTrigger) {
+            throw new Error("Experience Career Path controller did not initialize");
+          }
+
+          section.dataset.experienceEnhanced = "true";
+          stacked.hidden = true;
+          stacked.setAttribute("aria-hidden", "true");
+          cinematic.setAttribute("aria-hidden", "false");
+          cinematic.style.visibility = "visible";
+          cinematic.style.opacity = "1";
+          cinematic.style.pointerEvents = "auto";
+
+          ScrollTrigger.refresh();
+          renderCareerPath(proxy.position);
+        } catch (error) {
+          teardownCinematic();
+          console.error("Experience Career Path enhancement could not initialize", error);
+        }
+
+        return teardownCinematic;
       });
 
-      mm.add("(max-width: 1024px)", () => {
-        gsap.from(introRef.current, {
-          opacity: 0,
-          y: 30,
-          duration: 0.8,
-          ease: "power3.out",
+      mm.add(STACKED_REVEAL_QUERY, () => {
+        const items = gsap.utils.toArray<HTMLElement>(
+          ".experience-career-item",
+          stacked,
+        );
+        const nodes = gsap.utils.toArray<HTMLElement>(
+          "[data-stacked-node]",
+          stacked,
+        );
+        const signals = gsap.utils.toArray<SVGPathElement>(
+          "[data-stacked-signal]",
+          stacked,
+        );
+
+        const reveal = gsap.timeline({
           scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 88%",
+            trigger: stacked,
+            start: "top 86%",
             once: true,
           },
         });
 
-        gsap.from(".exp-mobile-card", {
-          opacity: 0,
-          y: 36,
-          stagger: 0.12,
-          duration: 0.8,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 84%",
-            once: true,
-          },
-        });
+        reveal
+          .from(items, {
+            opacity: 0,
+            y: 14,
+            stagger: motion.stagger.item,
+            duration: motion.duration.reveal,
+            ease: motion.ease.interface,
+          })
+          .from(
+            nodes,
+            {
+              opacity: 0,
+              scale: 0.75,
+              stagger: motion.stagger.item,
+              duration: motion.duration.hover,
+              ease: motion.ease.interface,
+            },
+            0,
+          )
+          .from(
+            signals,
+            {
+              strokeDashoffset: 1,
+              stagger: motion.stagger.item,
+              duration: motion.duration.interface,
+              ease: motion.ease.interface,
+            },
+            0.08,
+          );
       });
 
       return () => mm.revert();
     },
-    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true },
   );
 
   return (
     <section
       id="experience"
       ref={sectionRef}
-      className="relative overflow-hidden bg-[#070707] px-4 py-20 text-white sm:px-5 md:px-8 md:py-24 xl:py-28"
+      className="relative overflow-x-clip bg-section-dark px-4 py-20 text-inverse sm:px-5 md:px-8 md:py-24 xl:py-28"
     >
-      <div className="pointer-events-none absolute left-[12%] top-[12%] h-[220px] w-[220px] rounded-full bg-white/3 blur-[90px] md:h-[320px] md:w-[320px]" />
-      <div className="pointer-events-none absolute bottom-[10%] right-[10%] h-[260px] w-[260px] rounded-full bg-white/3 blur-[90px] md:h-[360px] md:w-[360px]" />
+      <header className="relative z-50 mx-auto mb-12 max-w-[1600px] md:mb-16">
+        <p className="font-inter text-[10px] font-semibold uppercase tracking-[0.42em] text-experience-signal">
+          [ Career Path ]
+        </p>
+        <h2 className="mt-4 font-syne text-[clamp(3rem,10vw,8.5rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.08em] text-inverse">
+          Experience
+        </h2>
+        <p className="mt-6 max-w-[16ch] font-inter text-xs font-semibold uppercase leading-6 tracking-[0.28em] text-inverse/45 sm:max-w-none">
+          From foundation
+          <span className="mx-3 hidden text-experience-signal sm:inline" aria-hidden="true">
+            / 
+          </span>
+          <span className="block sm:inline">to systems</span>
+        </p>
+      </header>
 
-      <div ref={pinWrapRef} className="mx-auto max-w-[1720px]">
+      <div className="relative grid">
         <div
-          ref={introRef}
-          className="mb-10 flex flex-col gap-5 md:mb-16 md:flex-row md:items-end md:justify-between xl:mb-20"
+          ref={cinematicRef}
+          data-experience-stage
+          aria-hidden="true"
+          className="invisible relative z-10 col-start-1 row-start-1 h-[clamp(34rem,calc(100svh-5.5rem),48rem)] overflow-hidden opacity-0 pointer-events-none"
         >
-          <div>
-            <p className="mb-4 font-inter text-[9px] font-semibold uppercase tracking-[0.42em] text-white/35 sm:text-[10px]">
-              [ Career Journey ]
-            </p>
-            <h2 className="font-syne text-[clamp(3rem,10vw,8.5rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.08em] text-[#f4f1ec]">
-              Experience
-            </h2>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-8 top-20 z-50 flex items-center justify-between font-inter text-[10px] font-bold uppercase tracking-[0.3em] text-inverse/55 md:inset-x-12"
+          >
+            <span>Career Path</span>
+            <span className="flex items-center gap-2">
+              <span ref={telemetryRef}>01</span>
+              <span className="text-inverse/25">/ 04</span>
+            </span>
           </div>
 
-          {/* <p className="max-w-md font-inter text-sm leading-6 text-white/45 md:text-right">
-            Scroll down to unfold the journey. Scroll up and it folds back into shape.
-          </p> */}
-        </div>
+          <div
+            ref={worldRef}
+            data-career-world
+            className="absolute inset-x-0 top-0 mx-auto h-[2920px] w-[min(1600px,calc(100vw-64px))]"
+          >
+            <RouteSvg activePathRef={activePathRef} />
 
-        {/* Desktop premium unfolding version */}
-        <div className={reducedMotion ? "hidden" : "hidden lg:block"}>
-          <div className="relative min-h-[82vh] overflow-hidden rounded-[32px] border border-white/10 bg-[#030303] px-8 py-12 xl:min-h-[84vh] xl:px-10 xl:py-14">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.04),transparent_42%)]" />
-
-            <div className="exp-glow pointer-events-none absolute left-1/2 top-[10%] z-0 h-[80%] w-[220px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02)_38%,transparent_72%)] blur-3xl" />
-
-            <div className="exp-beam pointer-events-none absolute left-1/2 top-[10%] z-0 h-[80%] w-px -translate-x-1/2 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.06),rgba(255,255,255,0.10))]" />
-
-            <div className="pointer-events-none absolute left-1/2 top-6 z-20 -translate-x-1/2 font-inter text-[11px] uppercase tracking-[0.28em] text-white/35">
-              Start
+            <div aria-hidden="true" className="absolute inset-0 z-20">
+              {ENVIRONMENTAL_MARKERS.map((marker) => (
+                <span
+                  key={marker.label}
+                  data-career-marker
+                  style={{
+                    insetInlineStart: marker.insetInlineStart,
+                    top: marker.top,
+                  }}
+                  className="absolute font-inter text-[9px] font-semibold uppercase tracking-[0.28em] text-inverse/24"
+                >
+                  {marker.label}
+                </span>
+              ))}
             </div>
 
-            <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 font-inter text-[11px] uppercase tracking-[0.28em] text-white/35">
-              Present
-            </div>
+            <div className="absolute inset-0 z-30">
+              {experienceChapters.map((chapter, index) => (
+                <article
+                  key={chapter.step}
+                  ref={(element) => {
+                    cardRefs.current[index] = element;
+                  }}
+                  data-career-card
+                  data-card-index={index}
+                  aria-hidden="true"
+                  style={CHAPTER_POSITIONS[index]}
+                  className="absolute isolate flex min-h-[19rem] h-auto w-[clamp(22rem,29vw,31rem)] origin-center flex-col overflow-hidden rounded-sm border border-inverse/16 bg-section-dark p-7 data-[career-dominant=true]:border-experience-signal/45 xl:p-8"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-0 top-0 h-px bg-experience-signal/65"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute start-3 top-3 h-4 w-4 border-s border-t border-experience-signal/45"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute bottom-3 end-3 h-4 w-4 border-b border-e border-experience-signal/30"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute bottom-0 start-0 h-px w-2/5 bg-experience-signal/45"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute end-0 top-1/2 h-px w-1/4 bg-experience-signal/55"
+                  />
 
-            <div className="relative z-10 mx-auto flex max-w-[1440px] flex-col gap-10 xl:gap-12">
-              {experiences.map((item) => {
-                const isLeft = item.side === "left";
-
-                return (
-                  <div
-                    key={item.step}
-                    className="exp-row relative grid min-h-[160px] grid-cols-[1fr_220px_1fr] items-center xl:min-h-[170px] xl:grid-cols-[1fr_260px_1fr]"
-                  >
-                    <div className="relative">
-                      {isLeft && (
-                        <div className="exp-text ml-auto max-w-[320px] pr-10 text-right xl:max-w-[360px] xl:pr-12">
-                          <p className="mb-2 font-inter text-[11px] font-semibold uppercase tracking-[0.32em] text-white/32">
-                            {item.period}
-                          </p>
-
-                          <h3 className="font-syne text-[1.75rem] font-bold uppercase tracking-[-0.05em] text-[#f3efe8] xl:text-[2rem]">
-                            {item.title}
-                          </h3>
-
-                          <p className="mt-1 font-inter text-sm uppercase tracking-[0.22em] text-white/42">
-                            {item.company}
-                          </p>
-
-                          <p className="mt-3 ml-auto max-w-sm font-inter text-sm leading-6 text-white/56">
-                            {item.description}
-                          </p>
-                        </div>
-                      )}
+                  <div data-card-content className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex items-center justify-between gap-5 border-b border-inverse-faint pb-5">
+                      <p className="inline-flex h-8 min-w-10 items-center justify-center rounded-sm border border-experience-signal/35 bg-experience-signal/8 px-2 font-inter text-[11px] font-bold uppercase tracking-[0.24em] text-experience-signal">
+                        {chapter.step}
+                      </p>
+                      <time className="font-inter text-[10px] font-semibold uppercase tracking-[0.2em] text-inverse/45">
+                        {chapter.period}
+                      </time>
                     </div>
 
-                    <div className="relative flex justify-center">
-                      <div
-                        className={`exp-connector pointer-events-none absolute top-1/2 z-0 flex h-px w-[180px] -translate-y-1/2 items-center ${
-                          isLeft
-                            ? "right-1/2 origin-right justify-start"
-                            : "left-1/2 origin-left justify-end"
-                        }`}
-                      >
-                        <div className="exp-connector-line h-px w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),rgba(255,255,255,0.34))]" />
-                        <div
-                          className={`exp-connector-dot absolute h-2 w-2 rounded-full bg-white/65 shadow-[0_0_18px_rgba(255,255,255,0.35)] ${
-                            isLeft ? "left-0" : "right-0"
-                          }`}
+                    <div className="py-7">
+                      <h3>
+                        <ExperienceTitle
+                          title={chapter.title}
+                          className="block max-w-full font-syne text-[1.58rem] font-extrabold uppercase leading-[0.9] text-inverse min-[1536px]:text-[1.95rem]"
                         />
-                      </div>
-
-                      <div
-                        className={`exp-pill relative z-10 flex h-[128px] w-[180px] items-center justify-center rounded-[999px] bg-linear-to-br ${item.accent} shadow-[0_26px_60px_rgba(0,0,0,0.34)] xl:h-[150px] xl:w-[220px]`}
-                      >
-                        <div className="absolute inset-px rounded-[999px] bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.02))]" />
-                        <div className="absolute inset-[14%] rounded-[999px] border border-white/10" />
-
-                        <div
-                          className="exp-number relative z-10 flex flex-col items-center justify-center leading-none"
-                          style={{ color: item.text }}
-                        >
-                          <span className="font-inter text-[2.6rem] font-light tracking-[-0.06em] xl:text-[3.5rem]">
-                            {item.step}
-                          </span>
-                          <span className="font-inter text-xs uppercase tracking-[0.28em] opacity-80 xl:text-sm">
-                            data
-                          </span>
-                        </div>
-
-                        <div className="exp-marker absolute left-1/2 top-1/2 z-20 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/35 bg-white/10 backdrop-blur-sm xl:h-5 xl:w-5" />
-                      </div>
+                      </h3>
+                      <p className="mt-5 flex items-center gap-3 font-inter text-xs font-semibold uppercase tracking-[0.2em] text-inverse/45">
+                        <span
+                          aria-hidden="true"
+                          className="h-px w-6 bg-experience-signal/55"
+                        />
+                        {chapter.context}
+                      </p>
                     </div>
 
-                    <div className="relative">
-                      {!isLeft && (
-                        <div className="max-w-[320px] pl-10 text-left xl:max-w-[360px] xl:pl-12 exp-text">
-                          <p className="mb-2 font-inter text-[11px] font-semibold uppercase tracking-[0.32em] text-white/32">
-                            {item.period}
-                          </p>
-
-                          <h3 className="font-syne text-[1.75rem] font-bold uppercase tracking-[-0.05em] text-[#f3efe8] xl:text-[2rem]">
-                            {item.title}
-                          </h3>
-
-                          <p className="mt-1 font-inter text-sm uppercase tracking-[0.22em] text-white/42">
-                            {item.company}
-                          </p>
-
-                          <p className="mt-3 max-w-sm font-inter text-sm leading-6 text-white/56">
-                            {item.description}
-                          </p>
-                        </div>
-                      )}
+                    <div className="mt-auto border-t border-inverse-faint pt-5">
+                      <p className="max-w-[46ch] font-inter text-base leading-7 text-inverse-muted">
+                        {chapter.description}
+                      </p>
+                      <p className="mt-6 inline-flex w-fit items-center border border-experience-signal/25 px-3 py-2 font-inter text-[9px] font-bold uppercase tracking-[0.28em] text-experience-signal">
+                        Chapter / {chapter.phase}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Tablet / Mobile premium editorial fallback */}
-        <div className={reducedMotion ? "block" : "lg:hidden"}>
-          <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#030303] px-5 py-8 sm:px-6 sm:py-10">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(255,255,255,0.05),transparent_42%)]" />
-            <div className="pointer-events-none absolute left-6 top-0 bottom-0 w-px bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04),rgba(255,255,255,0.12))] sm:left-8" />
-
-            <div className="space-y-8 sm:space-y-10">
-              {experiences.map((item) => (
-                <article key={item.step} className="exp-mobile-card relative pl-12 sm:pl-16">
-                  <div className="absolute left-[18px] top-10 z-10 h-4 w-4 -translate-x-1/2 rounded-full border border-white/30 bg-white/12 backdrop-blur-sm sm:left-[26px]" />
-
-                  <div
-                    className={`mb-5 flex h-[92px] w-[132px] items-center justify-center rounded-[999px] bg-linear-to-br ${item.accent} shadow-[0_18px_40px_rgba(0,0,0,0.28)] sm:h-[106px] sm:w-[150px]`}
-                  >
-                    <div
-                      className="relative z-10 flex flex-col items-center justify-center leading-none"
-                      style={{ color: item.text }}
-                    >
-                      <span className="font-inter text-[2rem] font-light tracking-[-0.06em] sm:text-[2.35rem]">
-                        {item.step}
-                      </span>
-                      <span className="font-inter text-[10px] uppercase tracking-[0.28em] opacity-80">
-                        data
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="mb-2 font-inter text-[10px] font-semibold uppercase tracking-[0.32em] text-white/32">
-                    {item.period}
-                  </p>
-
-                  <h3 className="font-syne text-[1.8rem] font-bold uppercase leading-[0.95] tracking-[-0.05em] text-[#f3efe8] sm:text-[2.1rem]">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-2 font-inter text-sm uppercase tracking-[0.22em] text-white/42">
-                    {item.company}
-                  </p>
-
-                  <p className="mt-4 max-w-136 font-inter text-sm leading-7 text-white/58">
-                    {item.description}
-                  </p>
                 </article>
               ))}
             </div>
+
+            <NodeSvg nodeRefs={nodeRefs} />
           </div>
+        </div>
+
+        <div
+          ref={stackedRef}
+          data-experience-stacked
+          className="relative z-20 col-start-1 row-start-1"
+        >
+          <StackedCareerPath />
         </div>
       </div>
     </section>
