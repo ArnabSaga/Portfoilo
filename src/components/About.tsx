@@ -1,304 +1,303 @@
 "use client";
 
-import { gsap } from "@/lib/gsap";
+import { SplitReveal } from "@/components/motion/SplitReveal";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { gsap, motion } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 import { useRef } from "react";
 
-const stats = [
-  // { value: "03+", label: "Years Building" },
-  { value: "06+", label: "Core Projects" },
-  { value: "100%", label: "Architecture Focused" },
-];
+const statementLines = [
+  "I build digital",
+  "systems with",
+  "architectural",
+  "precision.",
+] as const;
 
-const socials = [
-  { name: "Github", url: "https://github.com/ArnabSaga" },
-  { name: "LinkedIn", url: "https://www.linkedin.com/in/achyuta1/" },
-  // { name: "Instagram", url: "https://www.instagram.com/rz_arnab_/" },
-];
+const biography = [
+  "I am a full stack developer focused on scalable systems, thoughtful interfaces, and production quality engineering.",
+  "My work is shaped by logical data isolation, clear access control, and interface decisions that make complex products feel easier to use.",
+] as const;
+
+const philosophy = [
+  "Architecture before complexity.",
+  "Performance before decoration.",
+  "Clarity before cleverness.",
+] as const;
+
+const profileLinks = [
+  { label: "GitHub", href: "https://github.com/ArnabSaga" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/achyuta1/" },
+  { label: "Email", href: "mailto:achyutaarnabdey@gmail.com" },
+] as const;
+
+function PortraitPlate({
+  frameRef,
+  imageRef,
+}: {
+  frameRef: React.RefObject<HTMLElement | null>;
+  imageRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <figure
+      ref={frameRef}
+      data-about-portrait
+      className="about-reveal relative mx-auto w-full max-w-[28rem] lg:mx-0 lg:max-w-none"
+    >
+      <div className="relative aspect-4/5 overflow-hidden rounded-sm border border-border-custom bg-surface">
+        <span
+          aria-hidden="true"
+          className="absolute start-3 top-3 z-10 h-5 w-5 border-s border-t border-foreground/30"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute bottom-3 end-3 z-10 h-5 w-5 border-b border-e border-foreground/24"
+        />
+        <div ref={imageRef} className="relative h-full w-full">
+          <Image
+            src="/image/backward-profile.png"
+            alt="Portrait of Achyuta Arnab Dey"
+            fill
+            className="object-cover grayscale contrast-[1.05]"
+            sizes="(max-width: 1024px) min(100vw, 28rem), 34vw"
+          />
+        </div>
+      </div>
+      <figcaption className="mt-4 flex items-center justify-between gap-4 font-inter text-[0.62rem] font-bold uppercase tracking-[0.24em] text-foreground/50">
+        <span>Portrait / Profile</span>
+        <span aria-hidden="true">01</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function WorkingPhilosophy({
+  className = "",
+  headingId = "about-philosophy-heading",
+}: {
+  className?: string;
+  headingId?: string;
+}) {
+  return (
+    <section
+      data-about-group
+      aria-labelledby={headingId}
+      className={`about-reveal ${className}`}
+    >
+      <p
+        id={headingId}
+        className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48"
+      >
+        Working Philosophy
+      </p>
+      <ul className="mt-6 space-y-4">
+        {philosophy.map((item) => (
+          <li
+            key={item}
+            className="flex gap-4 font-inter text-base leading-7 text-foreground/74"
+          >
+            <span
+              aria-hidden="true"
+              className="mt-3 h-px w-7 shrink-0 bg-foreground/30"
+            />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function ProfileLinks({ className = "" }: { className?: string }) {
+  return (
+    <nav
+      data-about-group
+      aria-label="Profile links"
+      className={`about-reveal ${className}`}
+    >
+      <p className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48">
+        Profile Links
+      </p>
+      <ul className="mt-5 divide-y divide-border-custom border-y border-border-custom">
+        {profileLinks.map((link) => (
+          <li key={link.label}>
+            <a
+              href={link.href}
+              target={link.href.startsWith("http") ? "_blank" : undefined}
+              rel={
+                link.href.startsWith("http") ? "noopener noreferrer" : undefined
+              }
+              className="group flex min-h-11 items-center justify-between gap-5 py-3 font-inter text-[0.72rem] font-bold uppercase tracking-[0.22em] text-foreground/72 transition-colors duration-300 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+            >
+              <span>{link.label}</span>
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              >
+                ↗
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function ApproachBlock({ className = "" }: { className?: string }) {
+  return (
+    <div className={`about-reveal ${className}`}>
+      <p className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48">
+        Approach / 02
+      </p>
+      <p className="mt-5 max-w-[20ch] font-syne text-[clamp(1.4rem,5vw,1.95rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-foreground min-[1025px]:text-[clamp(1.4rem,2vw,2rem)]">
+        Architecture
+        <span className="block">before complexity.</span>
+      </p>
+    </div>
+  );
+}
 
 export default function About() {
   const sectionRef = useRef<HTMLElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const portraitFrameRef = useRef<HTMLDivElement>(null);
-  const portraitInnerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const portraitFrameRef = useRef<HTMLElement>(null);
+  const portraitImageRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
       if (
+        reducedMotion ||
         !sectionRef.current ||
-        !containerRef.current ||
         !portraitFrameRef.current ||
-        !portraitInnerRef.current ||
-        !contentRef.current
+        !portraitImageRef.current
       ) {
         return;
       }
-      if (reducedMotion) return;
 
-      const mm = gsap.matchMedia();
-
-      mm.add("(min-width: 1024px)", () => {
-        gsap.set(portraitFrameRef.current, {
-          clipPath: "inset(100% 0 0 0 round 32px)",
-        });
-
-        gsap.set(portraitInnerRef.current, {
-          scale: 1.12,
-          y: 36,
-        });
-
-        gsap.set(".about-kicker", {
-          y: 20,
+      const context = gsap.context(() => {
+        gsap.set("[data-about-kicker], .about-reveal", {
           opacity: 0,
-        });
-
-        gsap.set(".about-heading-line", {
-          yPercent: 110,
-          opacity: 0,
-        });
-
-        gsap.set(".about-copy", {
-          y: 30,
-          opacity: 0,
-        });
-
-        gsap.set(".about-stat", {
-          y: 24,
-          opacity: 0,
-        });
-
-        gsap.set(".about-social", {
           y: 18,
-          opacity: 0,
         });
 
-        const tl = gsap.timeline({
+        gsap.set(portraitFrameRef.current, {
+          clipPath: "inset(100% 0 0 0)",
+        });
+
+        gsap.set(portraitImageRef.current, {
+          scale: 1.03,
+        });
+
+        const timeline = gsap.timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 72%",
-            toggleActions: "play none none reverse",
+            start: "top 78%",
+            once: true,
           },
           defaults: {
-            ease: "power4.out",
+            ease: motion.ease.enter,
           },
         });
 
-        tl.to(".about-kicker", {
-          y: 0,
-          opacity: 1,
-          duration: 0.55,
-        })
+        timeline
+          .to("[data-about-kicker]", {
+            opacity: 1,
+            y: 0,
+            duration: motion.duration.interface,
+          })
           .to(
             portraitFrameRef.current,
             {
-              clipPath: "inset(0% 0 0 0 round 32px)",
-              duration: 1.4,
+              clipPath: "inset(0% 0 0 0)",
+              duration: motion.duration.major,
             },
-            "-=0.15"
+            0.18,
           )
           .to(
-            portraitInnerRef.current,
+            portraitImageRef.current,
             {
               scale: 1,
-              y: 0,
-              duration: 1.5,
+              duration: motion.duration.major,
             },
-            "<"
+            0.18,
           )
           .to(
-            ".about-heading-line",
+            ".about-reveal",
             {
-              yPercent: 0,
               opacity: 1,
-              duration: 1,
-              stagger: 0.08,
-            },
-            "-=1.05"
-          )
-          .to(
-            ".about-copy",
-            {
               y: 0,
-              opacity: 1,
-              duration: 0.8,
-              stagger: 0.08,
+              duration: motion.duration.reveal,
+              stagger: motion.stagger.item,
             },
-            "-=0.7"
-          )
-          .to(
-            ".about-stat",
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.7,
-              stagger: 0.06,
-            },
-            "-=0.55"
-          )
-          .to(
-            ".about-social",
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.6,
-              stagger: 0.06,
-            },
-            "-=0.5"
+            0.34,
           );
+      }, sectionRef);
 
-        gsap.to(portraitInnerRef.current, {
-          yPercent: -8,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-
-        gsap.to(contentRef.current, {
-          yPercent: -4,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-      });
-
-      mm.add("(max-width: 1023px)", () => {
-        gsap.from(".about-mobile-reveal", {
-          y: 28,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 85%",
-            once: true,
-          },
-        });
-      });
-
-      return () => mm.revert();
+      return () => context.revert();
     },
-    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true },
   );
 
   return (
     <section
       id="about"
       ref={sectionRef}
-      className="relative overflow-hidden bg-[#f3f3f3] px-3 py-3 text-black sm:px-4 md:px-6"
+      className="relative scroll-mt-32 overflow-hidden bg-background px-4 py-18 text-foreground sm:px-6 lg:scroll-mt-36 lg:px-8 lg:py-24"
     >
-      <div
-        ref={containerRef}
-        className="relative w-full overflow-hidden rounded-[28px] bg-[#e9e9ea] px-5 py-10 sm:px-6 sm:py-12 md:px-8 md:py-14 lg:min-h-[92vh] lg:rounded-[40px] lg:px-12 lg:py-16 xl:px-16 xl:py-20"
-      >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03),transparent_70%)] opacity-60" />
-        <div className="pointer-events-none absolute left-[8%] top-[10%] h-[180px] w-[180px] rounded-full bg-black/2 blur-[70px] md:h-[260px] md:w-[260px]" />
-        <div className="pointer-events-none absolute bottom-[8%] right-[8%] h-[220px] w-[220px] rounded-full bg-black/2 blur-[80px] md:h-[300px] md:w-[300px]" />
+      <div className="mx-auto max-w-screen-2xl">
+        <header className="grid gap-5 border-b border-border-custom pb-6 font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48 sm:grid-cols-2">
+          <p data-about-kicker>About / Profile</p>
+          <p data-about-kicker className="sm:text-end">
+            01 / Identity
+          </p>
+        </header>
 
-        <div className="relative z-10 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14 xl:gap-20">
-          {/* Portrait */}
-          <div className="about-mobile-reveal lg:col-span-5 flex items-center justify-center lg:justify-start">
-            <div
-              ref={portraitFrameRef}
-              className="relative aspect-4/5 w-full max-w-[340px] overflow-hidden rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.12)] sm:max-w-[400px] md:max-w-[460px] lg:max-w-none lg:rounded-[32px]"
-            >
-              <div ref={portraitInnerRef} className="relative h-full w-full will-change-transform">
-                <Image
-                  src="/image/backward-profile.png"
-                  alt="Portrait of Achyuta Arnab Dey"
-                  fill
-                  priority
-                  className="object-cover grayscale brightness-[1.02] contrast-[1.05]"
-                  sizes="(max-width: 1024px) 90vw, 40vw"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div ref={contentRef} className="lg:col-span-7 flex flex-col justify-center">
-            <p className="about-kicker about-mobile-reveal mb-5 font-inter text-[9px] font-semibold uppercase tracking-[0.42em] text-black/36 sm:text-[10px]">
-              [ About Me ]
-            </p>
-
-            <div className="overflow-hidden">
-              <h2 className="about-heading-line about-mobile-reveal font-syne text-[clamp(2.2rem,7vw,4.8rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.07em] text-black">
-                Architecting the Future
-              </h2>
-            </div>
-
-            <div className="overflow-hidden">
-              <h2 className="about-heading-line about-mobile-reveal font-syne text-[clamp(2.2rem,7vw,4.8rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.07em] text-black">
-                of Multi-tenant
-              </h2>
-            </div>
-
-            <div className="overflow-hidden">
-              <h2 className="about-heading-line about-mobile-reveal font-syne text-[clamp(2.2rem,7vw,4.8rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.07em] text-black">
-                <span className="italic font-light text-black/58">Infrastructure.</span>
-              </h2>
-            </div>
-
-            <div className="mt-8 space-y-5 sm:space-y-6">
-              <p className="about-copy about-mobile-reveal max-w-2xl font-inter text-base leading-7 text-black/68 sm:text-lg sm:leading-8">
-                True engineering lives beneath the surface. I specialize in building complex,
-                production-ready SaaS platforms where security and tenant isolation are baked into
-                the DNA of the code.
-              </p>
-
-              <p className="about-copy about-mobile-reveal max-w-2xl font-inter text-base leading-7 text-black/68 sm:text-lg sm:leading-8">
-                My methodology prioritizes logical data isolation, granular RBAC, and
-                high-performance API architecture. I believe a beautiful interface is only as good
-                as the systems that power it — I build the power.
-              </p>
-            </div>
-
-            {/* Stats */}
-            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5 lg:mt-12">
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="about-stat about-mobile-reveal rounded-[20px] border border-black/8 bg-white/45 px-5 py-5 backdrop-blur-sm"
-                >
-                  <div className="font-syne text-3xl font-extrabold uppercase tracking-[-0.05em] text-black sm:text-4xl">
-                    {stat.value}
-                  </div>
-                  <div className="mt-2 font-inter text-[10px] font-semibold uppercase tracking-[0.28em] text-black/42 sm:text-[11px]">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Socials */}
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-4 sm:mt-12 lg:gap-x-8">
-              {socials.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="about-social about-mobile-reveal group inline-flex items-center gap-3"
-                >
-                  <div className="h-1.5 w-1.5 rounded-full bg-black/20 transition-colors duration-300 group-hover:bg-black" />
-                  <span className="font-inter text-[10px] font-semibold uppercase tracking-[0.22em] text-black/48 transition-colors duration-300 group-hover:text-black sm:text-xs">
-                    {social.name}
+        <div className="pt-14 sm:pt-16 min-[1025px]:pt-36">
+          <div className="grid gap-11 min-[1025px]:grid-cols-12 min-[1025px]:items-start min-[1025px]:gap-x-10 xl:gap-x-14">
+            <div className="min-[1025px]:col-span-7 xl:col-span-8">
+              <SplitReveal
+                as="h2"
+                className="font-syne text-[clamp(1.35rem,6.1vw,2.4rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.045em] text-foreground sm:max-[1024px]:text-[clamp(3rem,5.65vw,4.05rem)] sm:max-[1024px]:leading-[0.88] min-[1025px]:text-[clamp(2.35rem,2.75vw,2.65rem)] min-[1025px]:leading-[0.88] min-[1280px]:text-[clamp(3.3rem,4.05vw,5rem)] min-[1536px]:text-[clamp(4rem,3.7vw,5.1rem)]"
+              >
+                {statementLines.map((line) => (
+                  <span key={line} className="block whitespace-nowrap">
+                    {line}
                   </span>
-                </a>
-              ))}
+                ))}
+            </SplitReveal>
+
+              <ApproachBlock className="mt-10 hidden sm:mt-12 min-[1025px]:block" />
+              <WorkingPhilosophy
+                className="mt-12 hidden max-w-[36rem] border-t border-border-custom pt-9 min-[1025px]:block"
+                headingId="about-philosophy-heading-desktop"
+              />
             </div>
+
+            <div className="space-y-10 min-[1025px]:col-span-5 min-[1025px]:col-start-8 min-[1025px]:space-y-9 min-[1025px]:pt-2 xl:col-span-4 xl:col-start-9">
+              <PortraitPlate
+                frameRef={portraitFrameRef}
+                imageRef={portraitImageRef}
+              />
+
+              <div className="about-reveal max-w-[45ch] space-y-5 font-inter text-base leading-[1.6] text-foreground/74 sm:text-[clamp(1rem,1.15vw,1.2rem)]">
+                <p className="font-inter text-[0.68rem] font-bold uppercase leading-none tracking-[0.28em] text-foreground/48">
+                  Profile / 03
+                </p>
+                {biography.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+
+              <ProfileLinks className="hidden max-w-[32rem] min-[1025px]:block" />
+            </div>
+
+            <ApproachBlock className="min-[1025px]:hidden" />
+            <WorkingPhilosophy
+              className="min-[1025px]:hidden"
+              headingId="about-philosophy-heading-mobile"
+            />
+            <ProfileLinks className="min-[1025px]:hidden" />
           </div>
         </div>
       </div>
