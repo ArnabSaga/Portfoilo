@@ -1,330 +1,290 @@
 "use client";
 
-import { DURATION_BASE, EASE_STANDARD, gsap } from "@/lib/gsap";
+import { stackLayers, type StackTechnology } from "@/content/stack";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { gsap, motion } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 import { useRef } from "react";
 
-const stack = [
-  { name: "JavaScript", category: "Frontend & Backend", image: "/icon/javascript.jpg" },
-  { name: "TypeScript", category: "Frontend & Backend", image: "/icon/typescript.jpg" },
-  { name: "React.js", category: "Frontend", image: "/icon/reactjs.jpg" },
-  { name: "Next.js", category: "Fullstack", image: "/icon/nextjs.jpg" },
-  { name: "Node.js", category: "Backend", image: "/icon/nodejs.jpg" },
-  { name: "Express.js", category: "Backend", image: "/icon/express.jpg" },
-  { name: "MongoDB", category: "Backend", image: "/icon/mongodb.jpg" },
-  { name: "PostgreSQL", category: "Backend", image: "/icon/postgresql.jpg" },
-  { name: "Prisma", category: "Backend", image: "/icon/prisma.webp" },
-  { name: "Docker", category: "DevOps", image: "/icon/docker.jpg" },
-  { name: "Tailwind CSS", category: "Styles", image: "/icon/tailwind.jpg" },
-  { name: "shadcn/ui", category: "Styles", image: "icon/shadcn.jpg" },
-  { name: "GSAP", category: "Animation", image: "/icon/gsap.jpg" },
-  { name: "Three.js", category: "Creative Dev", image: "/icon/three-js.jpg" },
-  { name: "Git", category: "DevOps", image: "/icon/git.jpg" },
-];
+const MODULE_GRID_COLUMNS = {
+  2: "min-[1280px]:grid-cols-2",
+  3: "min-[1280px]:grid-cols-3",
+  4: "min-[1280px]:grid-cols-4",
+} as const;
 
-function StackCard({ item, index }: { item: (typeof stack)[0]; index: number }) {
-  const cardRef = useRef<HTMLElement>(null);
-  const imageWrapRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const metaRef = useRef<HTMLDivElement>(null);
-  const plusRef = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
+interface StackModuleProps {
+  technology: StackTechnology;
+  layerName: string;
+  moduleIndex: number;
+  position: number;
+}
 
-  useGSAP(
-    () => {
-      if (
-        !cardRef.current ||
-        !imageWrapRef.current ||
-        !titleRef.current ||
-        !metaRef.current ||
-        !plusRef.current
-      ) {
-        return;
-      }
-      if (reducedMotion) return;
-
-      const mm = gsap.matchMedia();
-
-      mm.add("(hover: hover) and (pointer: fine)", () => {
-        const tl = gsap.timeline({ paused: true });
-
-        tl.to(
-          cardRef.current,
-          {
-            y: -10,
-            scale: 1.01,
-            duration: 0.55,
-            ease: EASE_STANDARD,
-            borderColor: "var(--color-inverse-faint)",
-          },
-          0
-        )
-          .to(
-            imageWrapRef.current,
-            {
-              scale: 1.035,
-              opacity: 0.96,
-              duration: 0.65,
-              ease: EASE_STANDARD,
-            },
-            0
-          )
-          .to(
-            titleRef.current,
-            {
-              y: -4,
-              duration: 0.45,
-              ease: EASE_STANDARD,
-            },
-            0
-          )
-          .to(
-            metaRef.current,
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.5,
-              ease: EASE_STANDARD,
-            },
-            0.08
-          )
-          .to(
-            plusRef.current,
-            {
-              rotate: 90,
-              scale: 1.08,
-              backgroundColor: "var(--color-inverse)",
-              color: "var(--color-section-dark)",
-              borderColor: "transparent",
-              duration: 0.45,
-              ease: EASE_STANDARD,
-            },
-            0
-          );
-
-        const card = cardRef.current;
-        if (!card) return;
-
-        const onEnter = () => tl.play();
-        const onLeave = () => tl.reverse();
-
-        card.addEventListener("mouseenter", onEnter);
-        card.addEventListener("mouseleave", onLeave);
-        card.addEventListener("focusin", onEnter);
-        card.addEventListener("focusout", onLeave);
-
-        return () => {
-          card.removeEventListener("mouseenter", onEnter);
-          card.removeEventListener("mouseleave", onLeave);
-          card.removeEventListener("focusin", onEnter);
-          card.removeEventListener("focusout", onLeave);
-        };
-      });
-
-      return () => mm.revert();
-    },
-    { scope: cardRef, dependencies: [reducedMotion], revertOnUpdate: true }
-  );
+function StackModule({
+  technology,
+  layerName,
+  moduleIndex,
+  position,
+}: StackModuleProps) {
+  const responsiveDivider = [
+    position % 2 === 1 ? "min-[360px]:border-l" : "",
+    position > 0 ? "min-[1280px]:border-l" : "min-[1280px]:border-l-0",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <article
-      ref={cardRef}
-      tabIndex={0}
-      className={`stack-card group relative flex h-[320px] w-full max-w-full shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-inverse-faint bg-glass-dark shadow-(--shadow-stack-card) outline-none backdrop-blur-2xl focus-visible:border-inverse-muted focus-visible:ring-2 focus-visible:ring-inverse-faint sm:h-[360px] md:h-[400px] ${reducedMotion ? "lg:h-[430px] lg:w-full lg:max-w-full xl:h-[450px] 2xl:h-[500px]" : "will-change-transform lg:h-[430px] lg:w-[380px] lg:max-w-none xl:h-[450px] xl:w-[400px] 2xl:h-[500px] 2xl:w-[430px]"}`}
+    <li
+      data-stack-module
+      className={`stack-module group relative flex min-h-44 flex-col border-b border-inverse-faint px-4 py-5 sm:min-h-48 sm:px-5 sm:py-6 min-[1025px]:min-h-52 min-[1025px]:px-6 min-[1025px]:py-7 min-[1280px]:min-h-56 min-[1280px]:px-7 ${responsiveDivider}`}
     >
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div ref={imageWrapRef} className="relative h-full w-full">
+      <span className="font-inter text-[0.625rem] font-semibold uppercase tracking-[0.28em] text-inverse-muted">
+        {String(moduleIndex).padStart(2, "0")}
+      </span>
+
+      <div className="mt-5 flex flex-1 flex-col justify-end sm:mt-6">
+        <div
+          className="stack-module-icon relative h-8 w-8 overflow-hidden opacity-70 grayscale transition-opacity duration-300 sm:h-9 sm:w-9 min-[1025px]:h-10 min-[1025px]:w-10 min-[1280px]:h-13 min-[1280px]:w-13"
+        >
           <Image
-            src={item.image}
-            alt={item.name}
-            fill
-            className="object-cover opacity-40 transition-opacity duration-500 group-hover:opacity-60"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 380px, (max-width: 1536px) 400px, 430px"
-            unoptimized={item.image.startsWith('http')}
-            loading="lazy"
+            src={technology.image}
+            alt=""
+            width={52}
+            height={52}
+            className="h-full w-full object-cover"
+            sizes="52px"
           />
         </div>
-        <div className="absolute inset-0 bg-(--stack-card-overlay)" />
-      </div>
 
-      <div className="relative z-10 flex items-start justify-between gap-4 p-5 sm:p-6 lg:p-7 2xl:p-10">
-        <span className="max-w-[78%] font-inter text-[8px] font-semibold uppercase tracking-[0.24em] text-inverse-muted sm:text-[9px] lg:text-[10px]">
-          {String(index + 1).padStart(2, '0')} — {item.category}
+        <p
+          className="stack-module-name mt-5 break-words font-syne text-[clamp(1rem,5.2vw,1.35rem)] font-bold uppercase leading-[0.92] tracking-[-0.035em] text-inverse transition-[color,transform] duration-300 sm:text-[1.35rem] min-[1025px]:text-[1.5rem] min-[1280px]:text-[clamp(1.25rem,1.55vw,1.75rem)]"
+        >
+          {technology.name}
+        </p>
+
+        <span className="mt-2 font-inter text-[0.5625rem] font-semibold uppercase tracking-[0.24em] text-inverse-muted">
+          {layerName}
         </span>
 
-        <div
-          ref={plusRef}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-inverse-faint transition-colors sm:h-9 sm:w-9"
-        >
-          <span className="font-inter text-[12px] font-light leading-none text-inverse-muted group-hover:text-section-dark sm:text-[14px]">
-            +
-          </span>
-        </div>
+        <span
+          aria-hidden="true"
+          className="stack-module-rule mt-5 h-px w-10 bg-inverse-faint transition-[width,background-color] duration-300 sm:mt-6"
+        />
       </div>
-
-      <div className="relative z-10 px-5 pb-8 pt-6 sm:px-6 sm:pb-10 lg:px-7 lg:pb-12 xl:px-8 2xl:px-10 2xl:pb-16">
-        <h3
-          ref={titleRef}
-          className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-syne text-[clamp(1.35rem,6vw,1.75rem)] font-extrabold uppercase leading-[0.96] text-inverse sm:text-[1.65rem] md:text-[1.8rem] lg:text-[1.58rem] xl:text-[1.72rem] 2xl:text-[1.95rem]"
-        >
-          {item.name}
-        </h3>
-
-        <div ref={metaRef} className={`mt-4 flex items-center gap-3 xl:mt-5 ${reducedMotion ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}>
-          <div className="h-px w-6 bg-inverse-faint xl:w-8" />
-          <span className="font-inter text-[8px] font-semibold uppercase tracking-[0.24em] text-inverse-muted sm:text-[9px]">
-            Highly Proficient
-          </span>
-        </div>
-      </div>
-    </article>
+    </li>
   );
 }
 
 export default function TechStack() {
   const sectionRef = useRef<HTMLElement>(null);
-  const introRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const introRef = useRef<HTMLElement>(null);
+  const layerRefs = useRef<(HTMLElement | null)[]>([]);
   const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
-      if (!sectionRef.current || !trackRef.current || !introRef.current) return;
-      if (reducedMotion) return;
+      const intro = introRef.current;
+      const layers = layerRefs.current.filter(
+        (layer): layer is HTMLElement => layer !== null,
+      );
 
-      const mm = gsap.matchMedia();
+      if (!intro || layers.length !== stackLayers.length || reducedMotion) {
+        return;
+      }
 
-      mm.add("(min-width: 1024px)", () => {
-        const section = sectionRef.current!;
-        const track = trackRef.current!;
-        const cards = gsap.utils.toArray<HTMLElement>(".stack-card");
-
-        const getScrollAmount = () =>
-          Math.max(0, track.scrollWidth - window.innerWidth + window.innerWidth * 0.08);
-
-        gsap.set(cards, {
-          opacity: 0.58,
-          scale: 0.94,
-        });
-
-        gsap.from(introRef.current, {
-          opacity: 0,
-          y: 36,
-          duration: DURATION_BASE + 0.2,
-          ease: EASE_STANDARD,
+      gsap.fromTo(
+        intro,
+        {
+          autoAlpha: 0,
+          y: 20,
+          willChange: "transform, opacity",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: motion.duration.interface,
+          ease: motion.ease.interface,
+          clearProps: "opacity,visibility,transform,willChange",
           scrollTrigger: {
-            trigger: section,
-            start: "top 82%",
+            trigger: intro,
+            start: "top 88%",
+            once: true,
+          },
+        },
+      );
+
+      layers.forEach((layer) => {
+        const rule = layer.querySelector<HTMLElement>("[data-stack-rule]");
+        const metadata = layer.querySelector<HTMLElement>("[data-stack-layer-meta]");
+        const modules = gsap.utils.toArray<HTMLElement>(
+          "[data-stack-module]",
+          layer,
+        );
+
+        if (!rule || !metadata || modules.length === 0) return;
+
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: layer,
+            start: "top 86%",
             once: true,
           },
         });
 
-        const horizontalTween = gsap.to(track, {
-          x: () => -getScrollAmount(),
-          ease: "none",
-          scrollTrigger: {
-            trigger: section,
-            start: "top top",
-            end: () => `+=${getScrollAmount()}`,
-            scrub: 1,
-            pin: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-          },
-        });
-
-        cards.forEach((card) => {
-          gsap.to(card, {
-            opacity: 1,
-            scale: 1,
-            ease: EASE_STANDARD,
-            duration: 0.45,
-            scrollTrigger: {
-              trigger: card,
-              containerAnimation: horizontalTween,
-              start: "left 82%",
-              end: "center center",
-              scrub: true,
+        timeline
+          .fromTo(
+            rule,
+            { scaleX: 0, transformOrigin: "left center" },
+            {
+              scaleX: 1,
+              duration: motion.duration.interface,
+              ease: motion.ease.interface,
+              clearProps: "transform,transformOrigin,willChange",
             },
-          });
-
-          gsap.to(card, {
-            opacity: 0.5,
-            scale: 0.95,
-            ease: EASE_STANDARD,
-            duration: 0.45,
-            scrollTrigger: {
-              trigger: card,
-              containerAnimation: horizontalTween,
-              start: "center center",
-              end: "right 12%",
-              scrub: true,
+            0,
+          )
+          .fromTo(
+            metadata,
+            { opacity: 0, y: 8, willChange: "transform, opacity" },
+            {
+              opacity: 1,
+              y: 0,
+              duration: motion.duration.interface,
+              ease: motion.ease.interface,
+              clearProps: "opacity,transform,willChange",
             },
-          });
-        });
+            0.04,
+          )
+          .fromTo(
+            modules,
+            { opacity: 0.25, y: 14, willChange: "transform, opacity" },
+            {
+              opacity: 1,
+              y: 0,
+              duration: motion.duration.interface,
+              stagger: motion.stagger.text,
+              ease: motion.ease.interface,
+              clearProps: "opacity,transform,willChange",
+            },
+            0.08,
+          );
       });
-
-      mm.add("(max-width: 1023px)", () => {
-        gsap.from(".stack-card", {
-          y: 28,
-          stagger: 0.08,
-          duration: DURATION_BASE + 0.1,
-          ease: EASE_STANDARD,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 85%",
-            once: true,
-          },
-        });
-      });
-
-      return () => mm.revert();
     },
-    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
+    {
+      scope: sectionRef,
+      dependencies: [reducedMotion],
+      revertOnUpdate: true,
+    },
   );
 
   return (
     <section
       id="stack"
       ref={sectionRef}
-      className="relative flex min-h-screen w-full flex-col justify-center overflow-hidden bg-section-dark px-4 py-20 text-inverse sm:px-5 md:px-8 md:py-24 xl:py-28"
+      className="relative w-full overflow-hidden bg-section-dark px-4 py-20 text-inverse sm:px-5 sm:py-24 md:px-8 min-[1025px]:py-28 min-[1280px]:py-32"
     >
-      <div className="pointer-events-none absolute left-[10%] top-[14%] h-[240px] w-[240px] rounded-full bg-accent-cool blur-[90px] sm:h-[320px] sm:w-[320px] xl:h-[500px] xl:w-[500px] xl:blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-[8%] right-[10%] h-[280px] w-[280px] rounded-full bg-accent-warm blur-[90px] sm:h-[360px] sm:w-[360px] xl:h-[600px] xl:w-[600px] xl:blur-[120px]" />
+      <div className="mx-auto w-full max-w-[112rem]">
+        <header ref={introRef} className="mb-14 sm:mb-16 min-[1025px]:mb-20">
+          <div className="flex items-center justify-between gap-5 font-inter text-[0.5625rem] font-semibold uppercase tracking-[0.28em] text-inverse-muted sm:text-[0.625rem]">
+            <span>Core / Stack</span>
+            <span className="hidden sm:inline">15 Modules / 06 Layers</span>
+            <span className="sm:hidden">15 / 06</span>
+          </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1800px]">
-        <div
-          ref={introRef}
-          className="mb-10 grid grid-cols-1 items-end gap-5 sm:mb-12 lg:mb-16 lg:grid-cols-[1.2fr_0.5fr_0.8fr] 2xl:mb-24"
-        >
-          <div>
-            <h2 className="font-syne text-[clamp(3.2rem,10vw,10.5rem)] font-extrabold uppercase leading-[0.84] text-inverse">
+          <div aria-hidden="true" className="mt-5 h-px w-full bg-inverse-faint" />
+
+          <div className="mt-9 grid items-end gap-8 sm:mt-11 min-[1025px]:grid-cols-12 min-[1025px]:gap-6 min-[1280px]:mt-14">
+            <h2 className="font-syne text-[clamp(3.5rem,15vw,6.5rem)] font-extrabold uppercase leading-[0.8] tracking-[-0.055em] text-inverse min-[1025px]:col-span-7 min-[1025px]:text-[clamp(5.5rem,8vw,8rem)] min-[1280px]:col-span-6">
               Core
               <br />
               Stack
             </h2>
+
+            <p className="max-w-[31ch] font-inter text-base leading-relaxed text-inverse-muted min-[1025px]:col-span-4 min-[1025px]:col-start-9 min-[1025px]:pb-2 min-[1280px]:col-span-3 min-[1280px]:col-start-10">
+              Technical systems arranged by role inside the product architecture.
+            </p>
           </div>
+        </header>
 
-          <div className="hidden h-px w-full bg-inverse-faint lg:block" />
+        <div aria-label="Technical system layers">
+          {stackLayers.map((layer, layerIndex) => {
+            const gridColumns =
+              MODULE_GRID_COLUMNS[layer.technologies.length as 2 | 3 | 4];
 
-          <p className="pb-1 text-left font-inter text-[8px] font-semibold uppercase tracking-[0.34em] text-inverse-muted sm:text-[9px] lg:pb-4 lg:text-right lg:text-[10px]">
-            [ Technical expertise ]
-          </p>
-        </div>
+            return (
+              <article
+                key={layer.name}
+                ref={(element) => {
+                  layerRefs.current[layerIndex] = element;
+                }}
+                className="relative grid min-[1280px]:grid-cols-12"
+              >
+                <span
+                  data-stack-rule
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-0 h-px bg-inverse-faint"
+                />
 
-        <div
-          ref={trackRef}
-          className={reducedMotion
-            ? "grid w-full grid-cols-1 gap-4 py-2 sm:gap-5 lg:grid-cols-2 lg:gap-7 xl:gap-8"
-            : "flex w-full flex-col gap-4 py-2 sm:gap-5 lg:w-max lg:flex-row lg:items-center lg:gap-7 lg:pl-[18vw] lg:pr-[10vw] xl:gap-8 2xl:gap-9"}
-        >
-          {stack.map((item, index) => (
-            <StackCard key={item.name} item={item} index={index} />
-          ))}
+                <header
+                  data-stack-layer-meta
+                  className="flex items-center justify-start gap-3 border-b border-inverse-faint py-6 min-[1280px]:col-span-2 min-[1280px]:flex-col min-[1280px]:items-start min-[1280px]:justify-start min-[1280px]:gap-0 min-[1280px]:border-b-0 min-[1280px]:border-r min-[1280px]:px-5 min-[1280px]:py-7"
+                >
+                  <span className="font-inter text-[0.625rem] font-semibold uppercase tracking-[0.28em] text-inverse-muted">
+                    {layer.step}
+                  </span>
+                  <h3 className="font-syne text-lg font-bold uppercase leading-none tracking-[-0.025em] text-inverse sm:text-xl min-[1280px]:mt-3">
+                    {layer.name}
+                  </h3>
+                </header>
+
+                <ul
+                  className={`grid grid-cols-1 min-[360px]:grid-cols-2 min-[1280px]:col-span-10 ${gridColumns}`}
+                >
+                  {layer.technologies.map((technology, position) => {
+                    const moduleIndex =
+                      stackLayers
+                        .slice(0, layerIndex)
+                        .reduce(
+                          (total, currentLayer) =>
+                            total + currentLayer.technologies.length,
+                          0,
+                        ) +
+                      position +
+                      1;
+
+                    return (
+                      <StackModule
+                        key={technology.name}
+                        technology={technology}
+                        layerName={layer.name}
+                        moduleIndex={moduleIndex}
+                        position={position}
+                      />
+                    );
+                  })}
+                </ul>
+              </article>
+            );
+          })}
         </div>
       </div>
+
+      <style>{`
+        @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+          #stack .stack-module:hover .stack-module-icon {
+            opacity: 1;
+          }
+
+          #stack .stack-module:hover .stack-module-name {
+            transform: translateY(calc(var(--spacing) * -0.5));
+          }
+
+          #stack .stack-module:hover .stack-module-rule {
+            width: calc(var(--spacing) * 16);
+            background-color: var(--color-inverse-muted);
+          }
+        }
+      `}</style>
     </section>
   );
 }

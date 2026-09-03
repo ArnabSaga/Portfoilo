@@ -7,11 +7,11 @@ import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 import { useRef } from "react";
 
-const statementLines = [
-  "I build digital",
-  "systems with",
-  "architectural",
-  "precision.",
+const manifestoLines = [
+  "I care about",
+  "what happens",
+  "behind the",
+  "interface.",
 ] as const;
 
 const biography = [
@@ -19,7 +19,7 @@ const biography = [
   "My work is shaped by logical data isolation, clear access control, and interface decisions that make complex products feel easier to use.",
 ] as const;
 
-const philosophy = [
+const principles = [
   "Architecture before complexity.",
   "Performance before decoration.",
   "Clarity before cleverness.",
@@ -31,7 +31,27 @@ const profileLinks = [
   { label: "Email", href: "mailto:achyutaarnabdey@gmail.com" },
 ] as const;
 
-function PortraitPlate({
+function MicroLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48">
+      {children}
+    </p>
+  );
+}
+
+function Signature() {
+  return (
+    <div className="about-reveal border-s border-foreground/18 ps-4 font-inter uppercase tracking-[0.2em] text-foreground/54">
+      <p className="text-[0.68rem] font-bold text-foreground/70">
+        Achyuta Arnab Dey
+      </p>
+      <p className="mt-2 text-[0.6rem] font-bold">Full Stack Developer</p>
+      <p className="mt-2 text-[0.6rem] font-bold">Bangladesh</p>
+    </div>
+  );
+}
+
+function PortraitSpine({
   frameRef,
   imageRef,
 }: {
@@ -39,68 +59,91 @@ function PortraitPlate({
   imageRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <figure
-      ref={frameRef}
-      data-about-portrait
-      className="about-reveal relative mx-auto w-full max-w-[28rem] lg:mx-0 lg:max-w-none"
-    >
-      <div className="relative aspect-4/5 overflow-hidden rounded-sm border border-border-custom bg-surface">
-        <span
-          aria-hidden="true"
-          className="absolute start-3 top-3 z-10 h-5 w-5 border-s border-t border-foreground/30"
-        />
-        <span
-          aria-hidden="true"
-          className="absolute bottom-3 end-3 z-10 h-5 w-5 border-b border-e border-foreground/24"
-        />
-        <div ref={imageRef} className="relative h-full w-full">
-          <Image
-            src="/image/backward-profile.png"
-            alt="Portrait of Achyuta Arnab Dey"
-            fill
-            className="object-cover grayscale contrast-[1.05]"
-            sizes="(max-width: 1024px) min(100vw, 28rem), 34vw"
+    <div className="relative mx-auto w-full max-w-[22rem] min-[1025px]:mt-4 min-[1025px]:max-w-[18rem] xl:mt-8 xl:max-w-[22rem]">
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-[-3rem] start-1/2 hidden w-px -translate-x-1/2 bg-border-custom min-[1025px]:block"
+      />
+
+      <figure
+        ref={frameRef}
+        data-about-portrait
+        className="about-reveal relative z-10"
+      >
+        <div className="relative aspect-3/4 overflow-hidden rounded-sm border border-border-custom bg-surface">
+          <span
+            aria-hidden="true"
+            className="absolute start-3 top-3 z-10 h-5 w-5 border-s border-t border-foreground/30"
           />
+          <span
+            aria-hidden="true"
+            className="absolute bottom-3 end-3 z-10 h-5 w-5 border-b border-e border-foreground/24"
+          />
+          <div ref={imageRef} className="relative h-full w-full">
+            <Image
+              src="/image/backward-profile.png"
+              alt="Portrait of Achyuta Arnab Dey"
+              fill
+              className="object-cover grayscale contrast-[1.05]"
+              sizes="(max-width: 1024px) min(100vw, 24rem), 26vw"
+            />
+          </div>
         </div>
+      </figure>
+
+      <div className="relative z-10 mt-6">
+        <Signature />
       </div>
-      <figcaption className="mt-4 flex items-center justify-between gap-4 font-inter text-[0.62rem] font-bold uppercase tracking-[0.24em] text-foreground/50">
-        <span>Portrait / Profile</span>
-        <span aria-hidden="true">01</span>
-      </figcaption>
-    </figure>
+    </div>
   );
 }
 
-function WorkingPhilosophy({
-  className = "",
-  headingId = "about-philosophy-heading",
-}: {
-  className?: string;
-  headingId?: string;
-}) {
+function IdentityBlock() {
   return (
     <section
       data-about-group
-      aria-labelledby={headingId}
-      className={`about-reveal ${className}`}
+      aria-labelledby="about-identity-heading"
+      className="about-reveal max-w-[44ch] min-[1025px]:mt-24"
     >
       <p
-        id={headingId}
+        id="about-identity-heading"
         className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48"
       >
-        Working Philosophy
+        01 / Identity
       </p>
-      <ul className="mt-6 space-y-4">
-        {philosophy.map((item) => (
+      <div className="mt-7 space-y-6 font-inter text-[clamp(1.05rem,1.2vw,1.25rem)] leading-[1.55] text-foreground/76">
+        {biography.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ApproachBlock() {
+  return (
+    <section
+      data-about-group
+      aria-labelledby="about-approach-heading"
+      className="about-reveal max-w-[30rem]"
+    >
+      <p
+        id="about-approach-heading"
+        className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48"
+      >
+        02 / Approach
+      </p>
+      <ul className="mt-7 space-y-4 font-inter text-base leading-7 text-foreground/74">
+        {principles.map((principle) => (
           <li
-            key={item}
-            className="flex gap-4 font-inter text-base leading-7 text-foreground/74"
+            key={principle}
+            className="flex gap-4"
           >
             <span
               aria-hidden="true"
               className="mt-3 h-px w-7 shrink-0 bg-foreground/30"
             />
-            <span>{item}</span>
+            <span>{principle}</span>
           </li>
         ))}
       </ul>
@@ -108,17 +151,15 @@ function WorkingPhilosophy({
   );
 }
 
-function ProfileLinks({ className = "" }: { className?: string }) {
+function ConnectionRow() {
   return (
     <nav
       data-about-group
       aria-label="Profile links"
-      className={`about-reveal ${className}`}
+      className="about-reveal border-t border-border-custom pt-9 min-[1025px]:pt-10"
     >
-      <p className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48">
-        Profile Links
-      </p>
-      <ul className="mt-5 divide-y divide-border-custom border-y border-border-custom">
+      <MicroLabel>03 / Connection</MicroLabel>
+      <ul className="mt-6 grid gap-0 divide-y divide-border-custom border-y border-border-custom min-[768px]:grid-cols-3 min-[768px]:divide-x min-[768px]:divide-y-0">
         {profileLinks.map((link) => (
           <li key={link.label}>
             <a
@@ -127,7 +168,7 @@ function ProfileLinks({ className = "" }: { className?: string }) {
               rel={
                 link.href.startsWith("http") ? "noopener noreferrer" : undefined
               }
-              className="group flex min-h-11 items-center justify-between gap-5 py-3 font-inter text-[0.72rem] font-bold uppercase tracking-[0.22em] text-foreground/72 transition-colors duration-300 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+              className="group flex min-h-13 items-center justify-between gap-5 px-0 py-4 font-inter text-[0.72rem] font-bold uppercase tracking-[0.22em] text-foreground/72 transition-colors duration-300 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground min-[768px]:px-6 min-[1025px]:px-8"
             >
               <span>{link.label}</span>
               <span
@@ -141,20 +182,6 @@ function ProfileLinks({ className = "" }: { className?: string }) {
         ))}
       </ul>
     </nav>
-  );
-}
-
-function ApproachBlock({ className = "" }: { className?: string }) {
-  return (
-    <div className={`about-reveal ${className}`}>
-      <p className="font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48">
-        Approach / 02
-      </p>
-      <p className="mt-5 max-w-[20ch] font-syne text-[clamp(1.4rem,5vw,1.95rem)] font-bold uppercase leading-[0.95] tracking-[-0.04em] text-foreground min-[1025px]:text-[clamp(1.4rem,2vw,2rem)]">
-        Architecture
-        <span className="block">before complexity.</span>
-      </p>
-    </div>
   );
 }
 
@@ -178,15 +205,15 @@ export default function About() {
       const context = gsap.context(() => {
         gsap.set("[data-about-kicker], .about-reveal", {
           opacity: 0,
-          y: 18,
+          y: 16,
         });
 
         gsap.set(portraitFrameRef.current, {
-          clipPath: "inset(100% 0 0 0)",
+          clipPath: "inset(0 100% 0 0)",
         });
 
         gsap.set(portraitImageRef.current, {
-          scale: 1.03,
+          scale: 1.02,
         });
 
         const timeline = gsap.timeline({
@@ -209,10 +236,10 @@ export default function About() {
           .to(
             portraitFrameRef.current,
             {
-              clipPath: "inset(0% 0 0 0)",
+              clipPath: "inset(0 0 0 0)",
               duration: motion.duration.major,
             },
-            0.18,
+            0.14,
           )
           .to(
             portraitImageRef.current,
@@ -220,7 +247,7 @@ export default function About() {
               scale: 1,
               duration: motion.duration.major,
             },
-            0.18,
+            0.14,
           )
           .to(
             ".about-reveal",
@@ -229,8 +256,9 @@ export default function About() {
               y: 0,
               duration: motion.duration.reveal,
               stagger: motion.stagger.item,
+              clearProps: "willChange",
             },
-            0.34,
+            0.28,
           );
       }, sectionRef);
 
@@ -246,58 +274,53 @@ export default function About() {
       className="relative scroll-mt-32 overflow-hidden bg-background px-4 py-18 text-foreground sm:px-6 lg:scroll-mt-36 lg:px-8 lg:py-24"
     >
       <div className="mx-auto max-w-screen-2xl">
-        <header className="grid gap-5 border-b border-border-custom pb-6 font-inter text-[0.68rem] font-bold uppercase tracking-[0.28em] text-foreground/48 sm:grid-cols-2">
-          <p data-about-kicker>About / Profile</p>
-          <p data-about-kicker className="sm:text-end">
-            01 / Identity
-          </p>
+        <header className="border-b border-border-custom pb-6">
+          <div data-about-kicker>
+            <MicroLabel>About / Profile</MicroLabel>
+          </div>
         </header>
 
-        <div className="pt-14 sm:pt-16 min-[1025px]:pt-36">
-          <div className="grid gap-11 min-[1025px]:grid-cols-12 min-[1025px]:items-start min-[1025px]:gap-x-10 xl:gap-x-14">
-            <div className="min-[1025px]:col-span-7 xl:col-span-8">
+        <div className="pt-10 sm:pt-14 min-[1025px]:pt-18 xl:pt-22">
+          <div className="grid gap-12 min-[1025px]:grid-cols-12 min-[1025px]:items-start min-[1025px]:gap-x-7 xl:gap-x-10">
+            <div className="min-[1025px]:col-span-5">
               <SplitReveal
                 as="h2"
-                className="font-syne text-[clamp(1.35rem,6.1vw,2.4rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.045em] text-foreground sm:max-[1024px]:text-[clamp(3rem,5.65vw,4.05rem)] sm:max-[1024px]:leading-[0.88] min-[1025px]:text-[clamp(2.35rem,2.75vw,2.65rem)] min-[1025px]:leading-[0.88] min-[1280px]:text-[clamp(3.3rem,4.05vw,5rem)] min-[1536px]:text-[clamp(4rem,3.7vw,5.1rem)]"
+                className="font-syne text-[clamp(1.45rem,6.2vw,2.65rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.05em] text-foreground min-[768px]:text-[clamp(3rem,6.4vw,4.8rem)] min-[1025px]:text-[clamp(2rem,2.85vw,2.75rem)] min-[1280px]:text-[clamp(2.45rem,2.1vw,3rem)]"
               >
-                {statementLines.map((line) => (
+                {manifestoLines.map((line) => (
                   <span key={line} className="block whitespace-nowrap">
                     {line}
                   </span>
                 ))}
-            </SplitReveal>
+              </SplitReveal>
 
-              <ApproachBlock className="mt-10 hidden sm:mt-12 min-[1025px]:block" />
-              <WorkingPhilosophy
-                className="mt-12 hidden max-w-[36rem] border-t border-border-custom pt-9 min-[1025px]:block"
-                headingId="about-philosophy-heading-desktop"
-              />
+              <div className="mt-12 hidden min-[1025px]:block xl:mt-14">
+                <ApproachBlock />
+              </div>
             </div>
 
-            <div className="space-y-10 min-[1025px]:col-span-5 min-[1025px]:col-start-8 min-[1025px]:space-y-9 min-[1025px]:pt-2 xl:col-span-4 xl:col-start-9">
-              <PortraitPlate
+            <div className="min-[1025px]:col-span-3 min-[1025px]:col-start-6 xl:col-span-3 xl:col-start-6">
+              <PortraitSpine
                 frameRef={portraitFrameRef}
                 imageRef={portraitImageRef}
               />
-
-              <div className="about-reveal max-w-[45ch] space-y-5 font-inter text-base leading-[1.6] text-foreground/74 sm:text-[clamp(1rem,1.15vw,1.2rem)]">
-                <p className="font-inter text-[0.68rem] font-bold uppercase leading-none tracking-[0.28em] text-foreground/48">
-                  Profile / 03
-                </p>
-                {biography.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </div>
-
-              <ProfileLinks className="hidden max-w-[32rem] min-[1025px]:block" />
             </div>
 
-            <ApproachBlock className="min-[1025px]:hidden" />
-            <WorkingPhilosophy
-              className="min-[1025px]:hidden"
-              headingId="about-philosophy-heading-mobile"
-            />
-            <ProfileLinks className="min-[1025px]:hidden" />
+            <div className="hidden min-[1025px]:col-span-4 min-[1025px]:col-start-9 min-[1025px]:block xl:col-span-4 xl:col-start-9">
+              <IdentityBlock />
+            </div>
+
+            <div className="min-[1025px]:hidden">
+              <IdentityBlock />
+            </div>
+
+            <div className="min-[1025px]:hidden">
+              <ApproachBlock />
+            </div>
+          </div>
+
+          <div className="mt-14 sm:mt-16 min-[1025px]:mt-20">
+            <ConnectionRow />
           </div>
         </div>
       </div>

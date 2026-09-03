@@ -21,18 +21,11 @@
 :root {
   --background: #F9F9F9;
   --foreground: #111111;
-  --shadow-stack-card: 0 16px 44px rgba(0, 0, 0, 0.28);
   --shadow-floating: 0 8px 30px color-mix(in srgb, var(--color-foreground) 9%, transparent);
   --shadow-media: 0 24px 80px color-mix(in srgb, var(--color-foreground) 18%, transparent);
   --radius-project: 1.75rem;
   --nav-scroll-offset: 6rem;
   --project-media-shade: color-mix(in srgb, var(--color-foreground) 45%, transparent);
-  --stack-card-overlay: linear-gradient(
-    180deg,
-    var(--color-section-dark) 0%,
-    rgba(6, 6, 6, 0.42) 46%,
-    rgba(6, 6, 6, 0.88) 100%
-  );
 }
 
 .hero-grid {
