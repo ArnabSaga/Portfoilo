@@ -155,7 +155,8 @@ export const projects = [
       'Prisma',
     ],
     date: '2026-08',
-    status: 'in-progress',
+    status: 'live',
+    liveUrl: 'https://operix-frontend-avi.vercel.app/',
     repositoryUrls: [
       { label: 'Frontend', url: 'https://github.com/ArnabSaga/Operix-Frontend' },
       { label: 'Backend', url: 'https://github.com/ArnabSaga/Operix-Backend' },

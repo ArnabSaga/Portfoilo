@@ -31,7 +31,7 @@ type ContactField = 'firstName' | 'lastName' | 'email' | 'inquiryType' | 'messag
 type ContactErrors = Partial<Record<ContactField, string>>;
 
 const FORM_NAME = 'portfolio-contact';
-const PUBLIC_EMAIL = 'achyutaarnabdey@gmail.com';
+const PUBLIC_EMAIL = 'arnabdey15091@gmail.com';
 const DEFAULT_INQUIRY: InquiryType = 'General Inquiry';
 const MESSAGE_LIMIT = 2000;
 
