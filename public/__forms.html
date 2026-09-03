@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Portfolio contact form definition</title>
+  </head>
+  <body>
+    <form
+      name="portfolio-contact"
+      method="POST"
+      action="/"
+      data-netlify="true"
+      data-netlify-honeypot="bot-field"
+    >
+      <input type="hidden" name="form-name" value="portfolio-contact" />
+      <input name="firstName" />
+      <input name="lastName" />
+      <input type="email" name="email" />
+      <input name="country" />
+      <input name="phone" type="tel" />
+      <input type="radio" name="inquiryType" value="SaaS Platform" />
+      <input type="radio" name="inquiryType" value="Creative Frontend" />
+      <input type="radio" name="inquiryType" value="Full-Stack MVP" />
+      <input type="radio" name="inquiryType" value="Architecture Review" />
+      <input type="radio" name="inquiryType" value="General Inquiry" checked />
+      <textarea name="message"></textarea>
+      <input name="bot-field" />
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>
