@@ -1,9 +1,12 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Flip } from "gsap/Flip";
+import { SplitText } from "gsap/SplitText";
+import { motion } from "@/lib/motion";
 
 // Register ScrollTrigger globally only once
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, Flip, SplitText);
   
   // Set default config
   gsap.config({
@@ -11,13 +14,11 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Motion Tokens
-export const EASE_STANDARD = "expo.out";
+export const EASE_STANDARD = motion.ease.cinematic;
 export const EASE_SOFT = "power2.inOut";
-
-export const DURATION_FAST = 0.4;
+export const DURATION_FAST = motion.duration.hover;
 export const DURATION_BASE = 0.8;
-export const DURATION_SLOW = 1.4;
+export const DURATION_SLOW = motion.duration.cinematic;
 
 // Helper to check for reduced motion
 export const isReducedMotion = () => {
@@ -25,4 +26,4 @@ export const isReducedMotion = () => {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 };
 
-export { gsap, ScrollTrigger };
+export { Flip, gsap, motion, ScrollTrigger, SplitText };

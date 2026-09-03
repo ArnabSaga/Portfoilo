@@ -1,379 +1,671 @@
 "use client";
 
-import { gsap } from "@/lib/gsap";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { Flip, gsap, motion, ScrollTrigger } from "@/lib/gsap";
 import Image from "next/image";
-import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type FocusEvent as ReactFocusEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
-type CtaState = "idle" | "waiting" | "angry" | "happy" | "clicked";
+type NavChapter = "index" | "stack" | "experience" | "work" | "contact";
+type NavTone = "light" | "dark";
+type NavDensity = "expanded" | "compact";
+type ScrollDirection = "up" | "down" | null;
+type MenuCloseReason = "toggle" | "escape" | "selection" | "outside" | "focus-leave";
 
-const navLinks = [
-  { href: "#hero", label: "Home" },
-  { href: "#work", label: "Work" },
-  { href: "#stack", label: "Stack" },
-  { href: "#experience", label: "Experience" },
-  { href: "#contact", label: "Contact" },
+interface NavLinkItem {
+  chapter: Exclude<NavChapter, "index">;
+  href: `#${Exclude<NavChapter, "index">}`;
+  label: string;
+  number: string;
+}
+
+const navLinks: readonly NavLinkItem[] = [
+  { chapter: "stack", href: "#stack", label: "Stack", number: "01" },
+  { chapter: "experience", href: "#experience", label: "Journey", number: "02" },
+  { chapter: "work", href: "#work", label: "Work", number: "03" },
+  { chapter: "contact", href: "#contact", label: "Contact", number: "04" },
 ];
+
+const RESUME_URL =
+  "https://drive.google.com/file/d/1DXPHzJPxcWU0pD_o8vN6IqQBXL-lVzt3/view?usp=sharing";
+const CHAPTER_PROBE_RATIO = 0.42;
+const TOP_EXPANDED_LIMIT = 96;
+const COMPACT_DISTANCE = 32;
+const EXPAND_DISTANCE = 18;
+const DESKTOP_QUERY = "(min-width: 1025px)";
+const FINE_POINTER_QUERY = "(hover: hover) and (pointer: fine)";
+
+const chapterProgress: Record<NavChapter, number> = {
+  index: 0,
+  stack: 0.25,
+  experience: 0.5,
+  work: 0.75,
+  contact: 1,
+};
+
+function getTone(chapter: NavChapter): NavTone {
+  return chapter === "stack" || chapter === "experience" ? "dark" : "light";
+}
 
 export default function Navbar() {
   const navRef = useRef<HTMLElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
-  const desktopMenuRef = useRef<HTMLDivElement>(null);
-  const resumeWrapRef = useRef<HTMLDivElement>(null);
-  const resumeBtnRef = useRef<HTMLButtonElement>(null);
-  const mobilePanelRef = useRef<HTMLDivElement>(null);
-  const mobileMenuBtnRef = useRef<HTMLButtonElement>(null);
+  const logoRef = useRef<HTMLAnchorElement>(null);
+  const desktopControllerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const capsuleRef = useRef<HTMLSpanElement>(null);
+  const progressRef = useRef<HTMLSpanElement>(null);
+  const menuTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const scheduleMeasureRef = useRef<() => void>(() => undefined);
+  const menuCloseReasonRef = useRef<MenuCloseReason>("toggle");
+  const lastScrollYRef = useRef(0);
+  const accumulatedDistanceRef = useRef(0);
+  const lastDirectionRef = useRef<ScrollDirection>(null);
+  const hoveredRef = useRef(false);
+  const focusWithinRef = useRef(false);
+  const menuOpenRef = useRef(false);
+  const finePointerRef = useRef(false);
+  const reducedMotionRef = useRef(false);
+  const previousChapterRef = useRef<NavChapter>("index");
 
-  const danceTweenRef = useRef<gsap.core.Tween | null>(null);
-  const pulseTweenRef = useRef<gsap.core.Tween | null>(null);
-  const angerTweenRef = useRef<gsap.core.Timeline | null>(null);
-
-  const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const angryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const happyDanceTweenRef = useRef<gsap.core.Tween | null>(null);
-
-  const ctaStateRef = useRef<CtaState>("idle");
-
-  const [ctaState, setCtaState] = useState<CtaState>("idle");
-  const [ctaText, setCtaText] = useState("Resume");
+  const [chapter, setChapter] = useState<NavChapter>("index");
+  const [density, setDensity] = useState<NavDensity>("expanded");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuInteractive, setMenuInteractive] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const desktopMode = useMediaQuery(DESKTOP_QUERY);
+  const finePointer = useMediaQuery(FINE_POINTER_QUERY);
+  const tone = getTone(chapter);
 
-  const stopCtaAnimations = useCallback(() => {
-    danceTweenRef.current?.kill();
-    pulseTweenRef.current?.kill();
-    angerTweenRef.current?.kill();
-    happyDanceTweenRef.current?.kill();
+  const resetDensityTracking = useCallback(() => {
+    lastScrollYRef.current = window.scrollY;
+    accumulatedDistanceRef.current = 0;
+    lastDirectionRef.current = null;
   }, []);
 
-  const triggerWaitingState = useCallback(() => {
-    if (!resumeBtnRef.current || ctaStateRef.current === "clicked") return;
-    if (window.innerWidth < 768) return;
+  const requestExpanded = useCallback(() => {
+    resetDensityTracking();
+    setDensity((current) => (current === "expanded" ? current : "expanded"));
+    scheduleMeasureRef.current();
+  }, [resetDensityTracking]);
 
-    ctaStateRef.current = "waiting";
-    setCtaState("waiting");
-    setCtaText("View technical resume");
-
-    stopCtaAnimations();
-
-    gsap.to(resumeBtnRef.current, {
-      paddingLeft: 28,
-      paddingRight: 28,
-      borderRadius: 999,
-      duration: 0.45,
-      ease: "power3.out",
+  const focusAfterDesktopTransition = useCallback((focusedChapter: string | undefined) => {
+    window.requestAnimationFrame(() => {
+      const target = focusedChapter
+        ? document.querySelector<HTMLAnchorElement>(`[data-desktop-nav="${focusedChapter}"]`)
+        : logoRef.current;
+      (target ?? logoRef.current)?.focus({ preventScroll: true });
     });
+  }, []);
 
-    pulseTweenRef.current = gsap.to(resumeBtnRef.current, {
-      boxShadow: "0 0 0 10px rgba(0,0,0,0)",
-      repeat: -1,
-      duration: 1.8,
-      ease: "power2.out",
-    });
+  const finishMenuClose = useCallback(() => {
+    const panel = menuPanelRef.current;
+    const reason = menuCloseReasonRef.current;
+    const focusStayedInside = Boolean(panel?.contains(document.activeElement));
 
-    danceTweenRef.current = gsap.to(resumeBtnRef.current, {
-      keyframes: [
-        { rotation: -2, y: -2, duration: 0.18 },
-        { rotation: 2, y: 0, duration: 0.18 },
-        { rotation: -1.5, y: -1, duration: 0.16 },
-        { rotation: 0, y: 0, duration: 0.16 },
-      ],
-      repeat: -1,
-      repeatDelay: 1.1,
-      ease: "power1.inOut",
-    });
-  }, [stopCtaAnimations]);
+    setMenuInteractive(false);
+    gsap.set(panel, { autoAlpha: 0, y: -8, pointerEvents: "none" });
 
-  const triggerAngryState = useCallback(() => {
-    if (!resumeBtnRef.current || ctaStateRef.current === "clicked") return;
-    if (window.innerWidth < 768) return;
-
-    ctaStateRef.current = "angry";
-    setCtaState("angry");
-    setCtaText("See system case notes");
-
-    stopCtaAnimations();
-
-    angerTweenRef.current = gsap.timeline({ repeat: -1, repeatDelay: 2.4 });
-
-    angerTweenRef.current
-      .to(resumeBtnRef.current, { x: -2, duration: 0.08, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 2, duration: 0.08, ease: "power1.inOut" })
-      .to(resumeBtnRef.current, { x: 0, scale: 1.015, duration: 0.18, ease: "power2.out" })
-      .to(resumeBtnRef.current, { scale: 1, duration: 0.2, ease: "power2.out" });
-
-    gsap.to(resumeBtnRef.current, {
-      borderRadius: 22,
-      duration: 0.35,
-      ease: "power3.out",
-    });
-  }, [stopCtaAnimations]);
-
-  const handleResumeClick = useCallback(() => {
-    if (!resumeBtnRef.current) return;
-
-    if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
-    if (angryTimerRef.current) clearTimeout(angryTimerRef.current);
-
-    stopCtaAnimations();
-
-    ctaStateRef.current = "happy";
-    setCtaState("happy");
-    setCtaText("Opening technical resume");
-
-    const tl = gsap.timeline();
-
-    tl.to(resumeBtnRef.current, {
-      y: -12,
-      scale: 1.05,
-      rotation: 5,
-      duration: 0.15,
-      ease: "power2.out",
-    })
-      .to(resumeBtnRef.current, {
-        y: 0,
-        scale: 1,
-        rotation: -5,
-        duration: 0.12,
-        ease: "bounce.out",
-      })
-      .to(resumeBtnRef.current, {
-        rotation: 0,
-        duration: 0.1,
-        onComplete: () => {
-          if (!resumeBtnRef.current) return;
-          // Start slow dancing
-          happyDanceTweenRef.current = gsap.to(resumeBtnRef.current, {
-            rotation: 3,
-            duration: 2.2,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut",
-          });
-        },
+    if ((reason === "escape" || reason === "selection") && focusStayedInside) {
+      window.requestAnimationFrame(() => {
+        menuButtonRef.current?.focus({ preventScroll: true });
       });
+    }
+  }, []);
 
-    // Small delay before opening to let the animation play
-    setTimeout(() => {
-      window.open(
-        "https://drive.google.com/file/d/1DXPHzJPxcWU0pD_o8vN6IqQBXL-lVzt3/view?usp=sharing",
-        "_blank"
-      );
-    }, 200);
-  }, [stopCtaAnimations]);
+  const closeMenu = useCallback(
+    (reason: MenuCloseReason) => {
+      menuCloseReasonRef.current = reason;
+      menuOpenRef.current = false;
+      setMenuOpen(false);
+      if (reducedMotion) finishMenuClose();
+      resetDensityTracking();
+      scheduleMeasureRef.current();
+    },
+    [finishMenuClose, reducedMotion, resetDensityTracking]
+  );
+
+  const openMenu = useCallback(() => {
+    menuCloseReasonRef.current = "toggle";
+    menuOpenRef.current = true;
+    setMenuInteractive(true);
+    setMenuOpen(true);
+    requestExpanded();
+  }, [requestExpanded]);
 
   useEffect(() => {
-    if (
-      !navRef.current ||
-      !logoRef.current ||
-      !desktopMenuRef.current ||
-      !resumeWrapRef.current ||
-      !resumeBtnRef.current
-    ) {
+    finePointerRef.current = finePointer;
+    reducedMotionRef.current = reducedMotion;
+  }, [desktopMode, finePointer, reducedMotion]);
+
+  useEffect(() => {
+    const progressElement = progressRef.current;
+    if (!progressElement) return;
+
+    const setProgress = gsap.quickSetter(progressElement, "scaleX");
+    let rafId: number | null = null;
+
+    const resetTracking = (scrollY: number) => {
+      lastScrollYRef.current = scrollY;
+      accumulatedDistanceRef.current = 0;
+      lastDirectionRef.current = null;
+    };
+
+    const measureController = () => {
+      const currentScrollY = window.scrollY;
+      const probe = window.innerHeight * CHAPTER_PROBE_RATIO;
+      let nextChapter: NavChapter = "index";
+
+      for (const item of navLinks) {
+        const element = document.getElementById(item.chapter);
+        const top = element?.getBoundingClientRect().top;
+        if (typeof top === "number" && top <= probe) nextChapter = item.chapter;
+      }
+
+      setChapter((current) => (current === nextChapter ? current : nextChapter));
+
+      if (reducedMotionRef.current) {
+        setProgress(chapterProgress[nextChapter]);
+      } else {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = maxScroll > 0 ? currentScrollY / maxScroll : 0;
+        setProgress(gsap.utils.clamp(0, 1, progress));
+      }
+
+      const forcedExpanded =
+        currentScrollY <= TOP_EXPANDED_LIMIT ||
+        menuOpenRef.current ||
+        focusWithinRef.current ||
+        (finePointerRef.current && hoveredRef.current);
+
+      if (forcedExpanded) {
+        setDensity((current) => (current === "expanded" ? current : "expanded"));
+        resetTracking(currentScrollY);
+        return;
+      }
+
+      const delta = currentScrollY - lastScrollYRef.current;
+      const direction: ScrollDirection = delta > 0 ? "down" : delta < 0 ? "up" : null;
+
+      if (direction && direction !== lastDirectionRef.current) {
+        accumulatedDistanceRef.current = 0;
+        lastDirectionRef.current = direction;
+      }
+
+      if (direction) accumulatedDistanceRef.current += Math.abs(delta);
+
+      if (direction === "down" && accumulatedDistanceRef.current >= COMPACT_DISTANCE) {
+        setDensity((current) => (current === "compact" ? current : "compact"));
+        accumulatedDistanceRef.current = 0;
+      } else if (direction === "up" && accumulatedDistanceRef.current >= EXPAND_DISTANCE) {
+        setDensity((current) => (current === "expanded" ? current : "expanded"));
+        accumulatedDistanceRef.current = 0;
+      }
+
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    const scheduleMeasure = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        measureController();
+      });
+    };
+
+    scheduleMeasureRef.current = scheduleMeasure;
+    resetTracking(window.scrollY);
+    scheduleMeasure();
+
+    window.addEventListener("scroll", scheduleMeasure, { passive: true });
+    window.addEventListener("resize", scheduleMeasure);
+    window.addEventListener("hashchange", scheduleMeasure);
+    window.addEventListener("popstate", scheduleMeasure);
+    ScrollTrigger.addEventListener("refresh", scheduleMeasure);
+
+    return () => {
+      window.removeEventListener("scroll", scheduleMeasure);
+      window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("hashchange", scheduleMeasure);
+      window.removeEventListener("popstate", scheduleMeasure);
+      ScrollTrigger.removeEventListener("refresh", scheduleMeasure);
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+      rafId = null;
+      scheduleMeasureRef.current = () => undefined;
+      gsap.set(progressElement, { clearProps: "transform" });
+    };
+  }, []);
+
+  useEffect(() => {
+    resetDensityTracking();
+    scheduleMeasureRef.current();
+  }, [desktopMode, finePointer, reducedMotion, resetDensityTracking]);
+
+  useEffect(() => {
+    if (!desktopMode) return;
+
+    const panel = menuPanelRef.current;
+    const activeElement = document.activeElement;
+    const focusWasInside = Boolean(panel?.contains(activeElement));
+    const focusedChapter =
+      activeElement instanceof HTMLElement ? activeElement.dataset.mobileNav : undefined;
+
+    menuTimelineRef.current?.kill();
+    menuTimelineRef.current = null;
+    menuOpenRef.current = false;
+    gsap.set(panel, { autoAlpha: 0, y: -8, pointerEvents: "none" });
+    resetDensityTracking();
+
+    const closeFrame = window.requestAnimationFrame(() => {
+      setMenuOpen(false);
+      setMenuInteractive(false);
+      if (focusWasInside) focusAfterDesktopTransition(focusedChapter);
+    });
+
+    return () => window.cancelAnimationFrame(closeFrame);
+  }, [desktopMode, focusAfterDesktopTransition, resetDensityTracking]);
+
+  useLayoutEffect(() => {
+    const panel = menuPanelRef.current;
+    if (!panel || desktopMode) return;
+
+    const items = panel.querySelectorAll<HTMLElement>("[data-mobile-nav]");
+    menuTimelineRef.current?.kill();
+
+    if (menuOpen) {
+      gsap.set(panel, { visibility: "visible", pointerEvents: "auto" });
+
+      if (reducedMotion) {
+        gsap.set(panel, { opacity: 1, y: 0 });
+        gsap.set(items, { opacity: 1, y: 0 });
+      } else {
+        menuTimelineRef.current = gsap
+          .timeline()
+          .fromTo(
+            panel,
+            { opacity: 0, y: -8 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: motion.duration.micro,
+              ease: motion.ease.interface,
+            }
+          )
+          .fromTo(
+            items,
+            { opacity: 0, y: 6 },
+            {
+              opacity: 1,
+              y: 0,
+              stagger: motion.stagger.text,
+              duration: motion.duration.hover,
+              ease: motion.ease.interface,
+            },
+            0
+          );
+      }
+
+      const focusFrame = window.requestAnimationFrame(() => {
+        panel.querySelector<HTMLAnchorElement>("a")?.focus({ preventScroll: true });
+      });
+
+      return () => window.cancelAnimationFrame(focusFrame);
+    }
+
+    if (!menuInteractive) {
+      gsap.set(panel, { autoAlpha: 0, y: -8, pointerEvents: "none" });
       return;
     }
 
-    const ctx = gsap.context(() => {
-      gsap.set([logoRef.current, desktopMenuRef.current, resumeWrapRef.current], {
-        y: -20,
-        opacity: 0,
-      });
+    if (reducedMotion) {
+      const closeFrame = window.requestAnimationFrame(finishMenuClose);
+      return () => window.cancelAnimationFrame(closeFrame);
+    }
 
-      gsap.to([logoRef.current, desktopMenuRef.current, resumeWrapRef.current], {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.08,
-        ease: "power3.out",
-        delay: 0.1,
-      });
-    }, navRef);
-
-    waitTimerRef.current = setTimeout(() => {
-      triggerWaitingState();
-    }, 10000);
-
-    angryTimerRef.current = setTimeout(() => {
-      triggerAngryState();
-    }, 30000);
-
-    return () => {
-      ctx.revert();
-
-      if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
-      if (angryTimerRef.current) clearTimeout(angryTimerRef.current);
-
-      stopCtaAnimations();
-    };
-  }, [triggerWaitingState, triggerAngryState, stopCtaAnimations]);
+    gsap.set(panel, { pointerEvents: "none" });
+    menuTimelineRef.current = gsap.timeline({ onComplete: finishMenuClose }).to(panel, {
+      opacity: 0,
+      y: -8,
+      duration: motion.duration.micro,
+      ease: motion.ease.interface,
+    });
+  }, [desktopMode, finishMenuClose, menuInteractive, menuOpen, reducedMotion]);
 
   useEffect(() => {
-    if (!mobilePanelRef.current) return;
+    if (!menuOpen || desktopMode) return;
 
-    if (menuOpen) {
-      gsap.set(mobilePanelRef.current, { display: "block" });
-      gsap.fromTo(
-        mobilePanelRef.current,
-        { opacity: 0, y: -12 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.3,
-          ease: "power3.out",
-        }
-      );
-    } else {
-      gsap.to(mobilePanelRef.current, {
-        opacity: 0,
-        y: -10,
-        duration: 0.24,
-        ease: "power2.out",
-        onComplete: () => {
-          if (mobilePanelRef.current) {
-            gsap.set(mobilePanelRef.current, { display: "none" });
-          }
-        },
-      });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenu("escape");
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        target &&
+        !menuPanelRef.current?.contains(target) &&
+        !menuButtonRef.current?.contains(target)
+      ) {
+        closeMenu("outside");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [closeMenu, desktopMode, menuOpen]);
+
+  useLayoutEffect(() => {
+    const capsule = capsuleRef.current;
+    if (!capsule) return;
+
+    if (chapter === "index") {
+      if (reducedMotion) {
+        gsap.set(capsule, { autoAlpha: 0 });
+      } else {
+        gsap.to(capsule, {
+          autoAlpha: 0,
+          duration: motion.duration.micro,
+          ease: motion.ease.interface,
+          overwrite: true,
+        });
+      }
+      previousChapterRef.current = chapter;
+      return;
     }
-  }, [menuOpen]);
 
-  const handleMobileLinkClick = () => {
-    setMenuOpen(false);
+    const target = document.querySelector<HTMLElement>(`[data-desktop-nav="${chapter}"]`);
+    if (!target) return;
+
+    const previousChapter = previousChapterRef.current;
+    const chapterChanged = previousChapter !== chapter;
+
+    if (previousChapter === "index") {
+      Flip.fit(capsule, target, { duration: 0 });
+      if (reducedMotion) {
+        gsap.set(capsule, { autoAlpha: 1 });
+      } else {
+        gsap.fromTo(
+          capsule,
+          { autoAlpha: 0 },
+          {
+            autoAlpha: 1,
+            duration: motion.duration.hover,
+            ease: motion.ease.interface,
+            overwrite: true,
+          }
+        );
+      }
+    } else if (chapterChanged && !reducedMotion) {
+      Flip.fit(capsule, target, {
+        duration: motion.duration.interface,
+        ease: motion.ease.interface,
+      });
+    } else {
+      Flip.fit(capsule, target, { duration: 0 });
+      gsap.set(capsule, { autoAlpha: 1 });
+    }
+
+    previousChapterRef.current = chapter;
+  }, [chapter, density, reducedMotion]);
+
+  useEffect(() => {
+    const controller = desktopControllerRef.current;
+    const capsule = capsuleRef.current;
+    if (!controller || !capsule || !desktopMode) return;
+
+    const refit = () => {
+      if (chapter === "index") return;
+      const target = controller.querySelector<HTMLElement>(`[data-desktop-nav="${chapter}"]`);
+      if (target) Flip.fit(capsule, target, { duration: 0 });
+    };
+    const observer = new ResizeObserver(refit);
+    let cancelled = false;
+
+    observer.observe(controller);
+    document.fonts.ready.then(() => {
+      if (!cancelled) refit();
+    });
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [chapter, desktopMode]);
+
+  useEffect(() => {
+    const root = navRef.current;
+    if (!root || reducedMotion) return;
+    const context = gsap.context(() => {
+      gsap.from("[data-nav-piece]", {
+        y: -12,
+        opacity: 0,
+        stagger: motion.stagger.item,
+        duration: motion.duration.interface,
+        ease: motion.ease.interface,
+      });
+    }, root);
+    return () => context.revert();
+  }, [reducedMotion]);
+
+  useEffect(
+    () => () => {
+      menuTimelineRef.current?.kill();
+      menuTimelineRef.current = null;
+    },
+    []
+  );
+
+  const handlePointerEnter = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!finePointer || event.pointerType !== "mouse") return;
+    hoveredRef.current = true;
+    requestExpanded();
   };
 
-  const ctaLabel =
-    ctaState === "idle"
-      ? "Resume"
-      : ctaState === "waiting"
-        ? "Resume"
-        : ctaState === "angry"
-          ? "Resume"
-          : ctaState === "happy"
-            ? "Opening"
-            : "Opening";
+  const handlePointerLeave = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!finePointer || event.pointerType !== "mouse") return;
+    hoveredRef.current = false;
+    resetDensityTracking();
+    scheduleMeasureRef.current();
+  };
+
+  const handleFocusCapture = () => {
+    focusWithinRef.current = true;
+    requestExpanded();
+  };
+
+  const handleBlurCapture = (event: ReactFocusEvent<HTMLElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+    focusWithinRef.current = false;
+    resetDensityTracking();
+    if (menuOpenRef.current) closeMenu("focus-leave");
+    scheduleMeasureRef.current();
+  };
+
+  const lightTone = tone === "light";
+  const controlHeight = density === "compact" ? "h-11" : "h-12";
+  const shellTone = lightTone
+    ? "border-foreground/10 bg-surface/80 text-foreground"
+    : "border-inverse-faint bg-section-dark/90 text-inverse";
+  const focusTone = lightTone
+    ? "focus-visible:outline-foreground"
+    : "focus-visible:outline-inverse";
 
   return (
     <nav
       ref={navRef}
-      className="pointer-events-none fixed left-0 top-0 z-50 w-full px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-5"
+      aria-label="Primary navigation"
+      data-chapter={chapter}
+      data-tone={tone}
+      data-density={density}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onFocusCapture={handleFocusCapture}
+      onBlurCapture={handleBlurCapture}
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 px-3 py-3 sm:px-5 min-[1025px]:px-7"
     >
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
-        {/* Logo */}
-        <div ref={logoRef} className="pointer-events-auto shrink-0">
-          <Link
-            href="#hero"
-            className="group relative flex items-center justify-center rounded-2xl border border-black/10 bg-white/72 px-2 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-500 hover:border-black/15 hover:bg-white/84 sm:px-2.5 sm:py-2.5"
-          >
-            <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(255,255,255,0.18))]" />
-            <Image
-              src="/logo/logo.jpg"
-              alt="AAD Logo"
-              width={44}
-              height={44}
-              className="relative z-10 object-contain h-7 w-auto sm:h-9 sm:w-auto"
-            />
-          </Link>
-        </div>
-
-        {/* Desktop menu */}
-        <div
-          ref={desktopMenuRef}
-          className="pointer-events-auto relative hidden items-center rounded-full border border-black/10 bg-white/72 px-6 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl md:flex lg:px-7"
+      <div className="mx-auto flex w-full max-w-7xl items-start justify-between gap-2 transition-[gap] duration-300 sm:gap-3">
+        <a
+          ref={logoRef}
+          data-nav-piece
+          href="#hero"
+          aria-label="Go to portfolio index"
+          aria-current={chapter === "index" ? "location" : undefined}
+          className={`pointer-events-auto flex min-w-0 items-center gap-2 rounded-2xl border px-2 shadow-[var(--shadow-floating)] backdrop-blur-xl transition-[height,border-color,background-color,color,padding] duration-300 focus-visible:outline-2 focus-visible:outline-offset-4 ${controlHeight} ${shellTone} ${focusTone} ${
+            chapter === "index"
+              ? lightTone
+                ? "border-foreground/30"
+                : "border-inverse/30"
+              : ""
+          }`}
         >
-          <div className="absolute inset-0 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.2))]" />
-          <div className="relative z-10 flex items-center gap-6 lg:gap-8 xl:gap-10">
-            {navLinks.map((item) => (
-              <Link
+          <Image src="/logo/logo.jpg" alt="" width={44} height={44} className="h-7 w-auto" priority />
+          <span aria-hidden="true" className="font-inter text-[8px] font-bold uppercase leading-tight tracking-[0.18em]">
+            <span className="min-[1025px]:hidden">00</span>
+            <span className="hidden min-[1025px]:block">00 Index</span>
+          </span>
+        </a>
+
+        <div
+          ref={desktopControllerRef}
+          data-nav-piece
+          className={`pointer-events-auto relative hidden items-center rounded-full border px-1 shadow-[var(--shadow-floating)] backdrop-blur-xl transition-[height,border-color,background-color,color,padding] duration-300 min-[1025px]:flex ${controlHeight} ${shellTone}`}
+        >
+          <span
+            ref={capsuleRef}
+            aria-hidden="true"
+            className={`invisible absolute left-0 top-0 z-0 rounded-full ${lightTone ? "bg-foreground" : "bg-inverse"}`}
+          />
+          {navLinks.map((item) => {
+            const active = chapter === item.chapter;
+            return (
+              <a
                 key={item.href}
+                data-desktop-nav={item.chapter}
                 href={item.href}
-                className="group relative font-inter text-[10px] font-semibold uppercase tracking-[0.2em] text-black/58 transition-colors duration-300 hover:text-black"
+                aria-current={active ? "location" : undefined}
+                className={`group relative z-10 flex min-h-11 items-center gap-2 rounded-full px-4 font-inter text-[10px] font-semibold uppercase tracking-[0.18em] transition-[color,padding] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 lg:px-5 ${
+                  active
+                    ? lightTone
+                      ? "text-inverse"
+                      : "text-foreground"
+                    : lightTone
+                      ? "text-foreground/58 hover:text-foreground focus-visible:outline-foreground"
+                      : "text-inverse-muted hover:text-inverse focus-visible:outline-inverse"
+                }`}
               >
-                {item.label}
-                <span className="absolute -bottom-1 left-1/2 h-px w-0 -translate-x-1/2 bg-black/80 transition-all duration-300 group-hover:w-full" />
-              </Link>
-            ))}
-          </div>
+                <span
+                  aria-hidden="true"
+                  className="text-[8px] opacity-60 transition-[opacity,transform] duration-300 group-hover:-translate-x-px group-hover:opacity-100"
+                >
+                  {item.number}
+                </span>
+                <span className="transition-transform duration-300 group-hover:translate-x-px">
+                  {item.label}
+                </span>
+              </a>
+            );
+          })}
+          <span
+            aria-hidden="true"
+            className={`absolute inset-x-4 bottom-0 h-px overflow-hidden ${lightTone ? "bg-foreground/10" : "bg-inverse-faint"}`}
+          >
+            <span
+              ref={progressRef}
+              data-nav-progress
+              className={`block h-full origin-left [transform:scaleX(0)] ${lightTone ? "bg-foreground/55" : "bg-inverse/60"}`}
+            />
+          </span>
         </div>
 
-        {/* Right controls */}
-        <div className="pointer-events-auto flex items-center gap-2 sm:gap-3">
-          {/* Mobile menu button */}
+        <div data-nav-piece className="pointer-events-auto flex items-center gap-2">
           <button
-            ref={mobileMenuBtnRef}
+            ref={menuButtonRef}
             type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-black/10 bg-white/78 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 hover:bg-white/88 md:hidden"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
+            aria-controls="mobile-primary-navigation"
+            onClick={() => (menuOpen ? closeMenu("toggle") : openMenu())}
+            className={`flex w-11 items-center justify-center rounded-2xl border shadow-[var(--shadow-floating)] backdrop-blur-xl transition-[height,border-color,background-color,color] duration-300 focus-visible:outline-2 focus-visible:outline-offset-4 min-[1025px]:hidden ${controlHeight} ${shellTone} ${focusTone}`}
           >
-            <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.16))]" />
-            <div className="relative z-10 flex flex-col gap-[4px]">
-              <span
-                className={`h-[1.5px] w-4 bg-black transition-transform duration-300 ${
-                  menuOpen ? "translate-y-[5.5px] rotate-45" : ""
-                }`}
-              />
-              <span
-                className={`h-[1.5px] w-4 bg-black transition-opacity duration-300 ${
-                  menuOpen ? "opacity-0" : "opacity-100"
-                }`}
-              />
-              <span
-                className={`h-[1.5px] w-4 bg-black transition-transform duration-300 ${
-                  menuOpen ? "-translate-y-[5.5px] -rotate-45" : ""
-                }`}
-              />
-            </div>
+            <span aria-hidden="true" className="font-inter text-[8px] font-bold uppercase tracking-[0.18em]">
+              {menuOpen ? "Close" : "Menu"}
+            </span>
           </button>
 
-          {/* Resume CTA */}
-          <div ref={resumeWrapRef}>
-            <button
-              ref={resumeBtnRef}
-              onClick={handleResumeClick}
-              aria-label={ctaText}
-              className={`group relative overflow-hidden border px-4 py-3 font-syne text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-colors duration-300 sm:px-5 sm:py-3.5 sm:tracking-[0.22em] ${
-                ctaState === "idle"
-                  ? "rounded-2xl border-black/10 bg-white/84 text-black"
-                  : ctaState === "waiting"
-                    ? "rounded-full border-black/10 bg-white/90 text-black"
-                    : ctaState === "angry"
-                      ? "rounded-[22px] border-foreground/12 bg-surface text-foreground"
-                      : ctaState === "happy"
-                        ? "rounded-full border-foreground/12 bg-surface text-foreground"
-                        : "rounded-full border-black/10 bg-white/90 text-black"
+          <Magnetic strength={motion.magnetic.subtle}>
+            <a
+              href={RESUME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex items-center gap-2 rounded-2xl border px-3 font-syne text-[9px] font-bold uppercase tracking-[0.16em] shadow-[var(--shadow-floating)] transition-[height,transform,background-color,color,border-color,padding] duration-300 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-4 sm:px-4 min-[1025px]:px-5 ${controlHeight} ${
+                lightTone
+                  ? "border-foreground/12 bg-foreground text-inverse focus-visible:outline-foreground"
+                  : "border-inverse/20 bg-inverse text-foreground focus-visible:outline-inverse"
               }`}
             >
-              <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.12))]" />
-              <span className="relative z-10 flex items-center gap-2">
-                <span className="hidden sm:inline">{ctaText}</span>
-                <span className="sm:hidden">{ctaLabel}</span>
-                {ctaState !== "idle" && <span className="text-[11px] leading-none">→</span>}
+              Resume
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover:translate-x-[3px] group-hover:-translate-y-[3px]"
+              >
+                ↗
               </span>
-            </button>
-          </div>
+            </a>
+          </Magnetic>
         </div>
       </div>
 
-      {/* Mobile dropdown panel */}
-      <div ref={mobilePanelRef} className="pointer-events-auto hidden pt-3 md:hidden">
-        <div className="overflow-hidden rounded-[24px] border border-black/10 bg-white/82 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.1)] backdrop-blur-xl">
-          <div className="mb-3 font-inter text-[9px] font-semibold uppercase tracking-[0.34em] text-black/34">
-            Navigation
-          </div>
-
-          <div className="flex flex-col gap-1">
-            {navLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={handleMobileLinkClick}
-                className="rounded-2xl px-3 py-3 font-syne text-lg font-bold uppercase tracking-[-0.03em] text-black transition-colors duration-300 hover:bg-black/4"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+      <div
+        id="mobile-primary-navigation"
+        ref={menuPanelRef}
+        aria-hidden={!menuInteractive}
+        inert={!menuInteractive ? true : undefined}
+        data-mobile-disclosure
+        className="pointer-events-none invisible mx-auto w-full max-w-7xl pt-3 opacity-0 min-[1025px]:hidden"
+      >
+        <div className={`rounded-3xl border p-3 shadow-[var(--shadow-floating)] backdrop-blur-xl ${shellTone}`}>
+          <ul className="divide-y divide-current/10">
+            {navLinks.map((item) => {
+              const active = chapter === item.chapter;
+              return (
+                <li key={item.href}>
+                  <a
+                    data-mobile-nav={item.chapter}
+                    href={item.href}
+                    aria-current={active ? "location" : undefined}
+                    onClick={() => closeMenu("selection")}
+                    className={`group relative flex min-h-12 items-center justify-between rounded-2xl px-4 font-syne text-base font-bold uppercase transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                      lightTone
+                        ? "focus-visible:outline-foreground"
+                        : "focus-visible:outline-inverse"
+                    }`}
+                  >
+                    <span aria-hidden="true" className="font-inter text-[9px] tracking-[0.2em] opacity-55">
+                      {item.number}
+                    </span>
+                    <span>{item.label}</span>
+                    <span
+                      aria-hidden="true"
+                      className={`absolute inset-x-4 bottom-1 h-px origin-left transition-transform duration-300 ${
+                        lightTone ? "bg-foreground" : "bg-inverse"
+                      } ${active ? "scale-x-100" : "scale-x-0"}`}
+                    />
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
     </nav>

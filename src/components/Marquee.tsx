@@ -1,6 +1,7 @@
 "use client";
 
-import { DURATION_BASE, EASE_STANDARD, ScrollTrigger, gsap, isReducedMotion } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { DURATION_BASE, EASE_STANDARD, ScrollTrigger, gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
 
@@ -16,14 +17,15 @@ const items = [
 export default function Marquee() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
       const track = trackRef.current;
       const section = sectionRef.current;
       if (!track || !section) return;
+      if (reducedMotion) return;
 
-      const reduced = isReducedMotion();
       let loopTween: gsap.core.Tween | null = null;
       let trigger: ScrollTrigger | null = null;
 
@@ -34,7 +36,7 @@ export default function Marquee() {
 
         loopTween = gsap.to(track, {
           x: -totalWidth,
-          duration: reduced ? 40 : 24,
+          duration: 24,
           ease: "none",
           repeat: -1,
           modifiers: {
@@ -45,8 +47,7 @@ export default function Marquee() {
           },
         });
 
-        if (!reduced) {
-          trigger = ScrollTrigger.create({
+        trigger = ScrollTrigger.create({
             trigger: section,
             start: "top bottom",
             end: "bottom top",
@@ -83,8 +84,7 @@ export default function Marquee() {
                 overwrite: true,
               });
             },
-          });
-        }
+        });
       };
 
       buildAnimation();
@@ -103,7 +103,7 @@ export default function Marquee() {
         loopTween?.kill();
       };
     },
-    { scope: sectionRef }
+    { scope: sectionRef, dependencies: [reducedMotion], revertOnUpdate: true }
   );
 
   return (
@@ -116,9 +116,10 @@ export default function Marquee() {
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-linear-to-l from-background to-transparent sm:w-16 md:w-24" />
 
       <div ref={trackRef} className="flex w-max flex-nowrap items-center">
-        {[0, 1].map((set) => (
+        {(reducedMotion ? [0] : [0, 1]).map((set) => (
           <div
             key={set}
+            aria-hidden={set === 1 ? "true" : undefined}
             className="flex flex-nowrap items-center gap-6 pr-6 sm:gap-8 sm:pr-8 md:gap-10 md:pr-10 lg:gap-12 lg:pr-12 xl:gap-14 xl:pr-14"
           >
             {items.map((item) => (

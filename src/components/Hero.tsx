@@ -1,315 +1,172 @@
 "use client";
 
-import { EASE_STANDARD, gsap, isReducedMotion } from "@/lib/gsap";
+import { SplitReveal } from "@/components/motion/SplitReveal";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { usePointerParallax } from "@/hooks/usePointerParallax";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { gsap, motion } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
-import { useCallback, useRef } from "react";
+import { useMemo, useRef } from "react";
 
-const rotatingTaglines = [
+const statements = [
   "High-end digital systems",
   "With architectural precision",
   "Scalable full-stack architecture",
 ];
 
 export default function Hero() {
-  const container = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const scrollCueRef = useRef<HTMLDivElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const orbitRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const desktopPointer = useMediaQuery("(min-width: 1025px) and (hover: hover) and (pointer: fine)");
+  const hasLens = desktopPointer && !reducedMotion;
+  const parallaxLayers = useMemo(
+    () => [
+      { ref: mediaRef, strength: motion.pointer.media },
+      { ref: frameRef, strength: motion.pointer.frame },
+      { ref: orbitRef, strength: motion.pointer.orbit },
+    ],
+    []
+  );
 
-  const xTo = useRef<((value: number) => void) | null>(null);
-  const yTo = useRef<((value: number) => void) | null>(null);
+  usePointerParallax({
+    rootRef: sectionRef,
+    cursorRef: lensRef,
+    layers: parallaxLayers,
+    enabled: hasLens,
+  });
 
   useGSAP(
     () => {
-      if (
-        !container.current ||
-        !lensRef.current ||
-        !scrollCueRef.current
-      ) {
-        return;
-      }
-
-      const reduced = isReducedMotion();
-      const mm = gsap.matchMedia();
-
-      const titleWords = gsap.utils.toArray<HTMLElement>(".hero-title-word");
-      const introItems = gsap.utils.toArray<HTMLElement>(".hero-intro");
-      const metaItems = gsap.utils.toArray<HTMLElement>(".hero-meta");
-      const taglineItems = gsap.utils.toArray<HTMLElement>(".tagline-item");
-
-      gsap.set(titleWords, { yPercent: 110, opacity: 0 });
-      gsap.set(introItems, { y: 24, opacity: 0 });
-      gsap.set(metaItems, { y: 20, opacity: 0 });
-      gsap.set(taglineItems, { opacity: 0 });
-
-      if (!reduced) {
-        gsap.set(lensRef.current, {
-          opacity: 0,
-          scale: 0.76,
-          xPercent: -50,
-          yPercent: -50,
-        });
-      } else {
-        gsap.set(lensRef.current, { display: "none" });
-      }
-
-      const introTl = gsap.timeline({
-        defaults: { ease: EASE_STANDARD },
-      });
-
-      introTl
-        .to(introItems, {
-          y: 0,
-          opacity: 1,
-          duration: 0.7,
-          stagger: 0.06,
-        })
-        .to(
-          titleWords,
-          {
-            yPercent: 0,
-            opacity: 1,
-            duration: 1.05,
-            stagger: 0.08,
-            ease: "power4.out",
-          },
-          "-=0.3"
-        )
-        .to(
-          metaItems,
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.75,
-            stagger: 0.08,
-            ease: "power3.out",
-          },
-          "-=0.65"
-        );
-
-      if (!reduced && taglineItems.length > 0) {
-        const taglineTl = gsap.timeline({ repeat: -1, repeatDelay: 0.2 });
-
-        taglineItems.forEach((item) => {
-          const words = item.querySelectorAll(".tagline-word");
-          gsap.set(words, { y: 16, opacity: 0 });
-
-          taglineTl
-            .set(item, { opacity: 1 })
-            .to(words, {
-              y: 0,
-              opacity: 1,
-              stagger: 0.04,
-              duration: 0.65,
-              ease: "power3.out",
-            })
-            .to(
-              words,
-              {
-                y: -12,
-                opacity: 0,
-                stagger: 0.02,
-                duration: 0.45,
-                ease: "power2.in",
-              },
-              "+=2"
-            )
-            .set(item, { opacity: 0 });
-        });
-      } else if (taglineItems.length > 0) {
-        gsap.set(taglineItems[0], { opacity: 1 });
-        gsap.set(taglineItems[0].querySelectorAll(".tagline-word"), {
-          y: 0,
-          opacity: 1,
-        });
-      }
-
-      mm.add("(min-width: 1025px)", () => {
-        if (!reduced) {
-
-          gsap.to(scrollCueRef.current, {
-            y: 8,
-            repeat: -1,
-            yoyo: true,
-            duration: 1.5,
-            ease: "sine.inOut",
+      if (!sectionRef.current) return;
+      const context = gsap.context(() => {
+        if (!reducedMotion) {
+          gsap.from("[data-hero-meta]", {
+            opacity: 0,
+            y: 16,
+            stagger: motion.stagger.item,
+            duration: motion.duration.interface,
+            delay: 0.12,
+            ease: motion.ease.interface,
           });
-
-          xTo.current = gsap.quickTo(lensRef.current, "x", {
-            duration: 0.45,
-            ease: "power3.out",
-          });
-
-          yTo.current = gsap.quickTo(lensRef.current, "y", {
-            duration: 0.45,
-            ease: "power3.out",
+          gsap.from("[data-hero-role]", {
+            opacity: 0,
+            y: 20,
+            duration: motion.duration.reveal,
+            delay: 1,
+            ease: motion.ease.interface,
           });
         }
-      });
 
-      mm.add("(max-width: 1024px)", () => {
-        gsap.to(scrollCueRef.current, {
-          y: 6,
-          repeat: -1,
-          yoyo: true,
-          duration: 1.6,
-          ease: "sine.inOut",
-        });
-      });
+        if (!reducedMotion) {
+          const items = gsap.utils.toArray<HTMLElement>("[data-statement]");
+          gsap.set(items, { opacity: 0, y: 12 });
+          const statementTimeline = gsap.timeline({ repeat: -1, delay: 1.35 });
+          items.forEach((item) => {
+            statementTimeline
+              .to(item, { opacity: 1, y: 0, duration: motion.duration.interface, ease: motion.ease.interface })
+              .to(item, { opacity: 1, duration: 1.8 })
+              .to(item, { opacity: 0, y: -10, duration: motion.duration.hover, ease: "power2.in" });
+          });
+        }
 
-      return () => mm.revert();
+        if (hasLens && lensRef.current) {
+          gsap.from(lensRef.current, {
+            opacity: 0,
+            scale: 0.78,
+            duration: motion.duration.major,
+            delay: 1.75,
+            ease: motion.ease.cinematic,
+          });
+        }
+
+        if (!reducedMotion) {
+          const lines = gsap.utils.toArray<HTMLElement>("[data-name-line]");
+          gsap.timeline({
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top top",
+              end: "bottom top",
+              scrub: 1,
+            },
+          })
+            .to(lines[0], { x: "-4vw", ease: "none" }, 0)
+            .to(lines[1], { x: "3vw", ease: "none" }, 0)
+            .to(lines[2], { x: "-2vw", ease: "none" }, 0)
+            .to(sectionRef.current, { opacity: 0.82, ease: "none" }, 0)
+            .to(lensRef.current, { width: "32vw", borderRadius: "1.75rem", ease: "none" }, 0);
+        }
+      }, sectionRef);
+      return () => context.revert();
     },
-    { scope: container }
+    { scope: sectionRef, dependencies: [hasLens, reducedMotion], revertOnUpdate: true }
   );
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse" || isReducedMotion()) return;
-    if (!container.current || !xTo.current || !yTo.current) return;
-    if (window.innerWidth < 1025) return;
-
-    const rect = container.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    xTo.current(x);
-    yTo.current(y);
-  }, []);
-
-  const handlePointerEnter = useCallback(() => {
-    if (isReducedMotion() || !lensRef.current) return;
-    if (window.innerWidth < 1025) return;
-
-    gsap.to(lensRef.current, {
-      opacity: 1,
-      scale: 1,
-      duration: 0.45,
-      ease: "power3.out",
-    });
-
-    videoRef.current?.play().catch(() => {});
-  }, []);
-
-  const handlePointerLeave = useCallback(() => {
-    if (!lensRef.current) return;
-
-    gsap.to(lensRef.current, {
-      opacity: 0,
-      scale: 0.76,
-      duration: 0.4,
-      ease: "power3.out",
-    });
-
-    videoRef.current?.pause();
-  }, []);
-
-  const titleLines = [["Achyuta"], ["Arnab"], ["Dey"]];
 
   return (
     <section
       id="hero"
-      ref={container}
-      className="relative flex min-h-screen items-center overflow-hidden border-b border-border-custom bg-background px-4 pb-16 pt-28 sm:px-6 sm:pb-18 sm:pt-32 md:px-[6vw] md:pb-20 md:pt-36"
-      onPointerMove={handlePointerMove}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
+      ref={sectionRef}
+      className="hero-grid relative flex min-h-screen overflow-hidden bg-background px-4 pb-14 pt-28 text-foreground sm:px-6 md:px-8 lg:items-end lg:pb-16"
     >
-      {!isReducedMotion() && (
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_32%,var(--color-surface)_0%,transparent_34%)] opacity-60" />
+
+      {hasLens && (
         <div
           ref={lensRef}
-          className="pointer-events-none absolute left-0 top-0 z-30 hidden h-44 w-44 overflow-hidden rounded-full border border-foreground/10 shadow-[0_24px_80px_rgba(0,0,0,0.18)] lg:block xl:h-52 xl:w-52 2xl:h-56 2xl:w-56"
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 top-0 z-20 h-52 w-52 -translate-x-1/2 -translate-y-1/2 overflow-visible rounded-full"
         >
-          <video
-            ref={videoRef}
-            src="/video/Project_showcase_video_202604070031.mp4"
-            muted
-            loop
-            playsInline
-            className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover"
-          />
-          <div className="absolute inset-0 bg-foreground/10 mix-blend-overlay" />
-          <div className="absolute inset-0 rounded-full border border-white/15" />
+          <div ref={frameRef} className="absolute inset-0 overflow-hidden rounded-[inherit] border border-foreground/16 shadow-[var(--shadow-media)]">
+            <div ref={mediaRef} className="absolute -inset-8">
+              <video
+                src="/video/Project_showcase_video_202604070031.mp4"
+                muted
+                playsInline
+                loop
+                autoPlay
+                preload="metadata"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+          <div ref={orbitRef} className="absolute -inset-6 animate-[spin_14s_linear_infinite] rounded-full border border-dashed border-foreground/20">
+            <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background px-2 font-inter text-[8px] font-bold uppercase tracking-[0.2em]">Explore Work</span>
+          </div>
         </div>
       )}
 
-
-
       <div className="relative z-10 mx-auto w-full max-w-screen-2xl">
-        <div className="hero-intro mb-8 inline-flex items-center border border-foreground/18 px-3 py-2 sm:px-4">
-          <span className="font-inter text-[9px] font-bold uppercase tracking-[0.38em] text-foreground/78 sm:text-[10px] sm:tracking-[0.45em]">
-            Available for Freelance — 2026
-          </span>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-foreground/12 pb-4 font-inter text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/52">
+          <span data-hero-meta>Portfolio / 2026</span>
+          <span data-hero-meta>Creative Engineering</span>
+          <span data-hero-meta className="hidden sm:inline">22.8456° N / 89.5403° E</span>
         </div>
 
-        <div>
-          {titleLines.map((line, lineIndex) => (
-            <div key={lineIndex} className="leading-none">
-              <div className="flex flex-wrap items-end gap-x-4 sm:gap-x-5">
-                {line.map((word, wordIndex) => (
-                  <span
-                    key={`${lineIndex}-${wordIndex}`}
-                    className="hero-title-word whitespace-nowrap font-syne text-[clamp(3rem,11vw,9.8rem)] font-extrabold uppercase leading-[0.82] tracking-[-0.07em] text-foreground"
-                  >
-                    {word}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+        <h1 className="sr-only">Achyuta Arnab Dey, Creative Web Developer</h1>
+        <div aria-hidden="true" className="space-y-0">
+          <div data-name-line><SplitReveal direction="left" delay={0.24} className="block font-syne text-[clamp(3rem,12vw,10.5rem)] font-extrabold uppercase leading-[0.78] tracking-[-0.075em]">Achyuta</SplitReveal></div>
+          <div data-name-line><SplitReveal direction="up" delay={0.34} className="block font-syne text-[clamp(3rem,12vw,10.5rem)] font-extrabold uppercase leading-[0.78] tracking-[-0.075em]">Arnab</SplitReveal></div>
+          <div data-name-line><SplitReveal direction="right" delay={0.44} className="block font-syne text-[clamp(3rem,12vw,10.5rem)] font-extrabold uppercase leading-[0.78] tracking-[-0.075em]">Dey</SplitReveal></div>
         </div>
 
-        <div className="mt-9 flex flex-col gap-8 sm:mt-10 md:mt-12 md:gap-10 lg:mt-14 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-[760px]">
-            <div className="hero-meta text-[clamp(1.35rem,4.8vw,3.4rem)] font-inter font-medium uppercase leading-[1.04] tracking-[-0.04em] text-foreground">
-              Creative Web Developer
-            </div>
-
-            <div className="hero-meta relative mt-3 min-h-[2.65em] overflow-hidden text-[clamp(1rem,3.1vw,2.35rem)] font-inter font-normal leading-[1.18] tracking-[-0.02em] text-foreground/42 sm:mt-4 sm:min-h-[1.45em] lg:min-h-[2.75em] xl:min-h-[1.45em]">
-              {rotatingTaglines.map((phrase, index) => (
-                <div
-                  key={index}
-                  className="tagline-item absolute left-0 top-0 flex max-w-[22ch] flex-wrap gap-x-2 sm:max-w-[34rem] xl:max-w-none"
+        <div data-hero-role className="mt-10 grid gap-7 border-t border-foreground/12 pt-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+          <p className="font-inter text-sm font-semibold uppercase tracking-[0.18em] text-foreground/62">Creative Web Developer</p>
+          <div className="lg:text-end">
+            <span className="block font-inter text-[9px] font-bold uppercase tracking-[0.32em] text-foreground/38">Building</span>
+            <div className="relative mt-2 min-h-[2.6rem] overflow-hidden font-syne text-[clamp(1.35rem,3vw,2.8rem)] font-bold uppercase leading-none tracking-[-0.04em]">
+              {statements.map((statement, index) => (
+                <span
+                  key={statement}
+                  data-statement
+                  aria-hidden={index > 0}
+                  className={`absolute inset-x-0 top-0 block ${index === 0 ? "opacity-100" : "opacity-0"}`}
                 >
-                  {phrase.split(" ").map((word, wordIndex) => (
-                    <span key={wordIndex} className="tagline-word inline-block whitespace-nowrap">
-                      {word}
-                    </span>
-                  ))}
-                </div>
+                  {statement}
+                </span>
               ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col items-start gap-6 sm:gap-7 lg:items-end lg:gap-8">
-            <div className="hero-meta flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-              <span className="h-1.5 w-1.5 rounded-full bg-foreground/45" />
-              <span className="h-1.5 w-1.5 rounded-full bg-foreground/18" />
-            </div>
-
-            <div className="hero-meta flex flex-col items-start lg:items-end">
-              <span className="font-inter text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/36 sm:text-[10px] sm:tracking-[0.38em]">
-                Scroll to Explore
-              </span>
-
-              <div
-                ref={scrollCueRef}
-                className="mt-3 flex h-12 w-12 items-center justify-center rounded-full border border-foreground/14 sm:mt-4 sm:h-14 sm:w-14"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 15 15"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M7.5 2V13M7.5 13L2.5 8M7.5 13L12.5 8"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="square"
-                  />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
