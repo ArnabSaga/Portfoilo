@@ -3,7 +3,7 @@
 @theme {
   --font-syne: var(--font-syne);
   --font-inter: var(--font-inter);
-  
+
   --color-background: #F9F9F9;
   --color-surface: #FFFFFF;
   --color-foreground: #111111;
@@ -128,4 +128,8 @@ html.lenis {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+html[data-entry-active] {
+  overflow: hidden;
 }

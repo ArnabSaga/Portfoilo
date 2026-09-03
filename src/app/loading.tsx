@@ -1,61 +1,39 @@
-"use client";
-
-import { useGSAP } from "@gsap/react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { gsap, motion } from "@/lib/gsap";
-import { useRef } from "react";
-
 export default function Loading() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLHeadingElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const subTextRef = useRef<HTMLParagraphElement>(null);
-  const reducedMotion = useReducedMotion();
-
-  useGSAP(() => {
-    if (reducedMotion) return;
-
-    const tl = gsap.timeline();
-
-    tl.from(textRef.current, {
-      y: "100%",
-      duration: motion.duration.reveal,
-      ease: motion.ease.enter,
-    })
-    .from(lineRef.current, {
-      scaleX: 0,
-      duration: motion.duration.cinematic,
-      repeat: -1,
-      ease: "power2.inOut",
-      transformOrigin: "left",
-    }, "-=0.4")
-    .from(subTextRef.current, {
-      opacity: 0,
-      duration: motion.duration.reveal,
-    }, "-=1.5");
-  }, { scope: containerRef, dependencies: [reducedMotion], revertOnUpdate: true });
+  const labelCls =
+    "font-inter text-[0.625rem] font-bold uppercase tracking-[0.28em] text-white/50";
+  const nameCls =
+    "font-syne text-[clamp(3.2rem,10vw,10rem)] font-extrabold uppercase leading-[0.84] tracking-[-0.04em] text-white";
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center">
-        <div className="relative overflow-hidden">
-          <h1 
-            ref={textRef}
-            className="text-8xl md:text-[12rem] font-syne font-extrabold uppercase tracking-tighter text-foreground leading-none"
-          >
-            Loading
-          </h1>
-          <div 
-            ref={lineRef}
-            className="absolute bottom-0 left-0 w-full h-[2px] bg-foreground"
-          />
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-[#060606] px-6 py-6 sm:px-10 sm:py-8 min-[1025px]:px-14 min-[1025px]:py-10"
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between">
+        <span className={labelCls}>Portfolio / Entry</span>
+        <span className={labelCls}>Portfolio / 2026</span>
+      </div>
+
+      {/* Top rule */}
+      <div className="mt-4 h-px w-full bg-white/15" />
+
+      {/* Center — name composition */}
+      <div className="flex flex-1 items-center">
+        <div className="w-full py-4">
+          <p className={nameCls}>ACHYUTA</p>
+          <p className={`${nameCls} pl-[10%] min-[1025px]:pl-[16%]`}>ARNAB</p>
+          <p className={`${nameCls} pl-[24%] min-[1025px]:pl-[34%]`}>DEY</p>
         </div>
-        <p 
-          ref={subTextRef}
-          className="mt-6 font-inter text-xs uppercase tracking-[0.5em] font-bold opacity-40"
-        >
-          Architectural Experience
-        </p>
+      </div>
+
+      {/* Bottom rule */}
+      <div className="h-px w-full bg-white/15" />
+
+      {/* Bottom bar */}
+      <div className="mt-4 flex items-center justify-between">
+        <span className={labelCls}>Creative Web Developer</span>
+        <span className={labelCls}>Architectural Systems</span>
       </div>
     </div>
   );
